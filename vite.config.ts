@@ -17,10 +17,7 @@ export default defineConfig({
         display: 'standalone',
         background_color: '#FAF7F2',
         theme_color: '#FAF7F2',
-        icons: [
-          { src: '/icons/kwaderno-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/kwaderno-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
-        ],
+        // Add generated, verified app icons before release.
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
