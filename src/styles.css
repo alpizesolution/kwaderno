@@ -60,3 +60,27 @@
 .entry-tools-bottom select{max-width:135px;padding:6px 7px;border:1px solid var(--line);border-radius:4px;background:#fffdf8;color:var(--ink);font:inherit}
 .search-empty{margin-top:12px}
 @media(max-width:650px){.entry-tools{padding:12px}.entry-tools-bottom{align-items:flex-start}.entry-tools-bottom label{gap:4px}.entry-tools-bottom select{max-width:115px}}
+
+/* Phase 2: diary calendar */
+.calendar-panel{margin:22px 0 28px;padding:20px;background:#fffdf8;border:1px solid var(--line);border-radius:8px}
+.calendar-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.calendar-heading h2{margin:0;font-family:'Playfair Display',serif;font-size:20px;font-weight:500;text-transform:capitalize}
+.calendar-nav{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--green);font-size:17px}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.calendar-weekdays{margin-bottom:6px}
+.calendar-weekdays span{padding:7px 0;text-align:center;color:var(--muted);font-size:10px;font-weight:600}
+.calendar-day{position:relative;display:grid;place-items:center;min-width:0;aspect-ratio:1;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--ink);font-size:12px}
+.calendar-day:hover{background:var(--green-soft)}
+.calendar-day.outside-month{color:#c1bdb3}
+.calendar-day.selected{border-color:var(--green);background:var(--green);color:#fff}
+.calendar-day.has-entry:not(.selected){background:#e8ece4;font-weight:700}
+.calendar-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--terracotta)}
+.calendar-day .calendar-dot{position:absolute;bottom:5px}
+.calendar-day.selected .calendar-dot{background:#fff}
+.calendar-legend{display:flex;align-items:center;gap:7px;margin:16px 0 0;color:var(--muted);font-size:10px}
+.calendar-day-entries{display:grid;gap:12px}
+.calendar-day-entries .section-heading h2{font-family:'Playfair Display',serif;font-size:20px;font-weight:500;text-transform:capitalize}
+.calendar-empty{padding:28px 20px}
+.calendar-empty>span{font-size:26px}
+.calendar-empty h2{font-size:19px}
+@media(max-width:650px){.calendar-panel{padding:13px}.calendar-grid{gap:2px}.calendar-day{font-size:11px;border-radius:4px}.calendar-day .calendar-dot{bottom:3px}.calendar-heading h2{font-size:18px}.calendar-day-entries .section-heading{align-items:flex-start;gap:8px}.calendar-day-entries .section-heading h2{font-size:17px}.calendar-day-entries .section-heading>.text-button{white-space:nowrap}}
