@@ -23,7 +23,7 @@ interface VaultRecord {
   verifierIv: string;
   verifierCiphertext: string;
   createdAt: string;
-  formatVersion: 1;
+  formatVersion: 1 | 2;
 }
 
 class KwadernoDatabase extends Dexie {
@@ -126,7 +126,7 @@ export async function hasVault(): Promise<boolean> {
  */
 export async function createVault(passphrase: string): Promise<void> {
   requireCrypto();
-  if (passphrase.length < 10) throw new Error('Gumamit ng passphrase na hindi bababa sa 10 character.');
+  if (!/^\d{6}$/.test(passphrase)) throw new Error('Gumamit ng eksaktong 6-digit PIN.');
   if (await hasVault()) throw new Error('May Kandadong Kwaderno na. I-unlock muna ito.');
 
   const salt = randomBytes(16);
@@ -153,7 +153,7 @@ export async function createVault(passphrase: string): Promise<void> {
     verifierIv: verifier.iv,
     verifierCiphertext: verifier.ciphertext,
     createdAt: new Date().toISOString(),
-    formatVersion: 1,
+    formatVersion: 2,
   };
 
   await db.transaction('rw', db.entries, db.encryptedEntries, db.vault, async () => {
@@ -177,6 +177,9 @@ export async function unlockVault(passphrase: string): Promise<void> {
   requireCrypto();
   const record = await db.vault.get(VAULT_ID);
   if (!record) throw new Error('Wala pang vault. I-set up ang Kandadong Kwaderno.');
+  if (record.formatVersion >= 2 && !/^\d{6}$/.test(passphrase)) {
+    throw new Error('Ilagay ang iyong 6-digit PIN.');
+  }
   const key = await deriveKey(passphrase, fromBase64(record.salt), record.iterations);
   try {
     const check = await decryptText(key, record.verifierIv, record.verifierCiphertext);
