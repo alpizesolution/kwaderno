@@ -69,6 +69,9 @@ function toBase64(bytes: Uint8Array): string {
 }
 
 function fromBase64(value: string): Uint8Array {
+  if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) {
+    throw new Error('Invalid base64 data.');
+  }
   const binary = atob(value);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
@@ -302,7 +305,8 @@ export async function importBackup(text: string, password: string): Promise<{ im
   if (envelope?.format !== BACKUP_FORMAT || envelope?.version !== BACKUP_VERSION ||
       envelope?.kdf !== 'PBKDF2-SHA-256' || !Number.isInteger(envelope?.iterations) ||
       envelope.iterations < 100_000 || envelope.iterations > 2_000_000 ||
-      typeof envelope.salt !== 'string' || typeof envelope.iv !== 'string' || typeof envelope.ciphertext !== 'string') {
+      typeof envelope.salt !== 'string' || typeof envelope.iv !== 'string' || typeof envelope.ciphertext !== 'string' ||
+      envelope.salt.length > 64 || envelope.iv.length > 32 || envelope.ciphertext.length > 140 * 1024 * 1024) {
     throw new Error('Hindi suportado o sira ang backup file.');
   }
   let payload: any;
@@ -318,9 +322,12 @@ export async function importBackup(text: string, password: string): Promise<{ im
     throw new Error('Hindi valid ang laman ng backup.');
   }
   const incoming = payload.entries.map((entry: any) => {
-    if (!entry || typeof entry.title !== 'string' || typeof entry.body !== 'string' ||
+    if (!entry || typeof entry.title !== 'string' || entry.title.length > 20_000 ||
+      typeof entry.body !== 'string' || entry.body.length > 2_000_000 ||
       !Array.isArray(entry.images) || entry.images.length > 5 ||
-      !entry.images.every((image: unknown) => typeof image === 'string' && image.startsWith('data:image/')) ||
+      !entry.images.every((image: unknown) =>
+        typeof image === 'string' && image.length <= 20 * 1024 * 1024 &&
+        /^data:image\/(?:jpeg|png|webp|gif|avif);base64,/i.test(image)) ||
       typeof entry.createdAt !== 'string' || Number.isNaN(Date.parse(entry.createdAt)) ||
       typeof entry.updatedAt !== 'string' || Number.isNaN(Date.parse(entry.updatedAt))) {
       throw new Error('May entry na hindi valid. Walang na-import.');
