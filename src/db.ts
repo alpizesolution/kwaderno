@@ -4,6 +4,7 @@ export interface DiaryEntry {
   id?: number;
   title: string;
   body: string;
+  images?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -142,7 +143,7 @@ export async function createVault(passphrase: string): Promise<void> {
   const encrypted: EncryptedEntry[] = [];
   for (const entry of legacyEntries) {
     if (entry.id === undefined) throw new Error('May pahinang walang ID. Walang binagong entry; subukang muli.');
-    const content = await encryptText(key, JSON.stringify({ title: entry.title, body: entry.body }));
+    const content = await encryptText(key, JSON.stringify({ title: entry.title, body: entry.body, images: entry.images ?? [] }));
     encrypted.push({
       id: entry.id,
       ...content,
@@ -210,11 +211,12 @@ export async function listEntries(): Promise<DiaryEntry[]> {
   const entries: DiaryEntry[] = [];
 
   for (const entry of encryptedEntries) {
-    const decrypted = JSON.parse(await decryptText(key, entry.iv, entry.ciphertext)) as Pick<DiaryEntry, 'title' | 'body'>;
+    const decrypted = JSON.parse(await decryptText(key, entry.iv, entry.ciphertext)) as Pick<DiaryEntry, 'title' | 'body' | 'images'>;
     entries.push({
       id: entry.id,
       title: decrypted.title,
       body: decrypted.body,
+      images: decrypted.images ?? [],
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
     });
@@ -223,13 +225,13 @@ export async function listEntries(): Promise<DiaryEntry[]> {
 }
 
 export async function saveEntry(
-  entry: Pick<DiaryEntry, 'title' | 'body'>,
+  entry: Pick<DiaryEntry, 'title' | 'body' | 'images'>,
   id?: number,
 ): Promise<number> {
   const now = new Date().toISOString();
   if (!activeKey) {
     if (await hasVault()) throw new Error('Naka-lock ang Kwaderno. I-unlock muna bago magpatuloy.');
-    const plainEntry = { title: entry.title.trim(), body: entry.body.trim(), updatedAt: now };
+    const plainEntry = { title: entry.title.trim(), body: entry.body.trim(), images: entry.images ?? [], updatedAt: now };
     if (id !== undefined) {
       const existing = await db.entries.get(id);
       if (!existing) throw new Error('Hindi na makita ang pahinang ine-edit. I-refresh ang listahan at subukan ulit.');
@@ -242,6 +244,7 @@ export async function saveEntry(
   const content = await encryptText(key, JSON.stringify({
     title: entry.title.trim(),
     body: entry.body.trim(),
+    images: entry.images ?? [],
   }));
 
   if (id !== undefined) {
