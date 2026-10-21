@@ -37,7 +37,7 @@ function App() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([hasVault(), getVaultFormatVersion()]).then(([exists, version]) => {
-      if (!cancelled) { setVaultExists(exists); setVaultFormatVersion(version); }
+      if (!cancelled) { setVaultExists(exists); setVaultFormatVersion(version); if (!exists) setOptionalMode(true); }
     }).catch(() => {
       if (!cancelled) setError('Hindi mabuksan ang local storage. Subukang gumamit ng updated browser at i-refresh.');
     }).finally(() => {
