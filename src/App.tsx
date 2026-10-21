@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createVault, deleteEntry, hasVault, listEntries, lockVault, saveEntry, unlockVault, type DiaryEntry } from './db';
+import PwaStatus from './PwaStatus';
 
 type Page = 'today' | 'entries' | 'calendar' | 'settings';
 
@@ -181,7 +182,7 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell">\n      <PwaStatus />
       <aside className="sidebar">
         <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); setPage('today'); setEditing(false); }}>
           <span className="brand-mark" aria-hidden="true"><span /></span>
