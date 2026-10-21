@@ -206,7 +206,11 @@ function requireUnlockedKey(): CryptoKey {
 }
 
 export async function listEntries(): Promise<DiaryEntry[]> {
-  const key = requireUnlockedKey();
+  if (!activeKey) {
+    if (await hasVault()) throw new Error('Naka-lock ang Kwaderno. I-unlock muna bago magpatuloy.');
+    return db.entries.orderBy('updatedAt').reverse().toArray();
+  }
+  const key = activeKey;
   const encryptedEntries = await db.encryptedEntries.orderBy('updatedAt').reverse().toArray();
   const entries: DiaryEntry[] = [];
 
@@ -227,8 +231,19 @@ export async function saveEntry(
   entry: Pick<DiaryEntry, 'title' | 'body'>,
   id?: number,
 ): Promise<number> {
-  const key = requireUnlockedKey();
   const now = new Date().toISOString();
+  if (!activeKey) {
+    if (await hasVault()) throw new Error('Naka-lock ang Kwaderno. I-unlock muna bago magpatuloy.');
+    const plainEntry = { title: entry.title.trim(), body: entry.body.trim(), updatedAt: now };
+    if (id !== undefined) {
+      const existing = await db.entries.get(id);
+      if (!existing) throw new Error('Hindi na makita ang pahinang ine-edit. I-refresh ang listahan at subukan ulit.');
+      await db.entries.update(id, plainEntry);
+      return id;
+    }
+    return db.entries.add({ ...plainEntry, createdAt: now });
+  }
+  const key = activeKey;
   const content = await encryptText(key, JSON.stringify({
     title: entry.title.trim(),
     body: entry.body.trim(),
@@ -252,6 +267,10 @@ export async function saveEntry(
 }
 
 export async function deleteEntry(id: number): Promise<void> {
-  requireUnlockedKey();
+  if (!activeKey) {
+    if (await hasVault()) throw new Error('Naka-lock ang Kwaderno. I-unlock muna bago magpatuloy.');
+    await db.entries.delete(id);
+    return;
+  }
   await db.encryptedEntries.delete(id);
 }
