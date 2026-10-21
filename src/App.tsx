@@ -185,7 +185,8 @@ function App() {
   }
 
   return (
-    <div className="app-shell">\n      <PwaStatus />
+    <div className="app-shell">
+      <PwaStatus />
       <aside className="sidebar">
         <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); setPage('today'); setEditing(false); }}>
           <span className="brand-mark" aria-hidden="true"><span /></span>
