@@ -11,6 +11,28 @@ const navItems: { id: Page; label: string; icon: string }[] = [
   { id: 'settings', label: 'Settings', icon: '⚙' },
 ];
 
+
+const weekdayLabels = ['Lun', 'Mar', 'Miy', 'Huw', 'Biy', 'Sab', 'Lin'];
+
+function localDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function buildCalendarDays(month: Date): { date: Date; key: string; inMonth: boolean }[] {
+  const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+  const startOffset = (firstDay.getDay() + 6) % 7;
+  const gridStart = new Date(firstDay);
+  gridStart.setDate(firstDay.getDate() - startOffset);
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(gridStart);
+    date.setDate(gridStart.getDate() + index);
+    return { date, key: localDateKey(date), inMonth: date.getMonth() === month.getMonth() };
+  });
+}
+
 const dateLabel = new Intl.DateTimeFormat('fil-PH', {
   weekday: 'long', month: 'long', day: 'numeric',
 }).format(new Date());
@@ -31,6 +53,8 @@ function App() {
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => localDateKey(new Date()));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -230,7 +254,7 @@ function App() {
               </div>
             </>}
             {page === 'entries' && <div className="simple-page"><span className="eyebrow">MGA NAITAGONG SALITA</span><h1>Mga <em>Pahina</em></h1><div className="entry-tools"><label className="entry-search-label" htmlFor="entry-search">Hanapin sa iyong kwaderno</label><input id="entry-search" className="entry-search" type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Maghanap ng salita o pamagat…" /><div className="entry-tools-bottom"><span>{searchQuery.trim() ? `Resulta: ${entries.filter((entry) => `${entry.title} ${entry.body}`.toLocaleLowerCase('fil-PH').includes(searchQuery.trim().toLocaleLowerCase('fil-PH'))).length}` : `${entries.length} ${entries.length === 1 ? 'pahina' : 'pahina'}`}</span><label htmlFor="entry-sort">Ayusin: <select id="entry-sort" value={sortOrder} onChange={(event) => setSortOrder(event.target.value as 'newest' | 'oldest')}><option value="newest">Pinakabago</option><option value="oldest">Pinakaluma</option></select></label></div></div>{loading ? <p className="empty-message">Binubuksan ang kwaderno…</p> : entries.length ? (() => { const query = searchQuery.trim().toLocaleLowerCase('fil-PH'); const filtered = entries.filter((entry) => `${entry.title} ${entry.body}`.toLocaleLowerCase('fil-PH').includes(query)).sort((a, b) => { const difference = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(); return sortOrder === 'newest' ? -difference : difference; }); return filtered.length ? <div className="entries-list">{filtered.map(renderEntry)}</div> : <div className="empty-paper search-empty"><span>⌕</span><h2>Walang tugmang pahina.</h2><p>Subukan ang ibang salita o burahin ang hinahanap mo.</p><button className="text-button" onClick={() => setSearchQuery('')}>Burahin ang paghahanap</button></div>; })() : <div className="empty-paper"><span>✎</span><h2>Blangko pa ang pahina.</h2><p>Kapag handa ka na, nandito lang ang kwaderno mo.</p><button className="primary-button" onClick={() => openEditor()}>＋ Bagong Pahina</button></div>}</div>}
-            {page === 'calendar' && <div className="simple-page"><span className="eyebrow">MGA ARAW NA DUMAAN</span><h1>Mga sandali, <em>unti-unti.</em></h1><div className="empty-paper"><span>☼</span><h2>May sariling oras ang bawat kwento.</h2><p>Ang calendar view ay susunod na idadagdag. Naka-encrypt ang mga pahina sa device na ito.</p></div></div>}
+            {page === 'calendar' && <div className="simple-page"><span className="eyebrow">MGA ARAW NA DUMAAN</span><h1>Mga sandali, <em>unti-unti.</em></h1><div className="calendar-panel"><div className="calendar-heading"><button className="calendar-nav" aria-label="Nakaraang buwan" onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1))}>←</button><h2>{calendarMonth.toLocaleDateString('fil-PH', { month: 'long', year: 'numeric' })}</h2><button className="calendar-nav" aria-label="Susunod na buwan" onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() + 1, 1))}>→</button></div><div className="calendar-grid calendar-weekdays">{weekdayLabels.map((day) => <span key={day}>{day}</span>)}</div><div className="calendar-grid">{buildCalendarDays(calendarMonth).map(({ date, key, inMonth }) => { const hasEntry = entries.some((entry) => localDateKey(new Date(entry.updatedAt)) === key); return <button key={key} className={`calendar-day ${inMonth ? '' : 'outside-month'} ${hasEntry ? 'has-entry' : ''} ${selectedCalendarDate === key ? 'selected' : ''}`} onClick={() => setSelectedCalendarDate(key)} aria-label={`${date.toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' })}${hasEntry ? ', may entry' : ''}`} aria-pressed={selectedCalendarDate === key}>{date.getDate()}{hasEntry && <span className="calendar-dot" aria-hidden="true" />}</button>; })}</div><p className="calendar-legend"><span className="calendar-dot" /> May naisulat sa araw na ito</p></div><div className="calendar-day-entries"><div className="section-heading"><div><span className="eyebrow">NAPILING ARAW</span><h2>{new Date(`${selectedCalendarDate}T12:00:00`).toLocaleDateString('fil-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</h2></div><button className="text-button" onClick={() => openEditor()}>＋ Bagong Pahina</button></div>{loading ? <p className="empty-message">Binubuksan ang kwaderno…</p> : entries.filter((entry) => localDateKey(new Date(entry.updatedAt)) === selectedCalendarDate).length ? entries.filter((entry) => localDateKey(new Date(entry.updatedAt)) === selectedCalendarDate).map(renderEntry) : <div className="empty-paper calendar-empty"><span>☼</span><h2>Walang entry sa araw na ito.</h2><p>Bawat araw ay may puwang para sa bagong kwento.</p><button className="primary-button" onClick={() => openEditor()}>＋ Sumulat para sa araw na ito</button></div>}</div></div>}
             {page === 'settings' && <div className="simple-page"><span className="eyebrow">SARILI MONG ESPASYO</span><h1>Mga <em>setting</em></h1><div className="settings-list"><div className="setting-row"><span className="setting-symbol">⌑</span><div><strong>Kandadong Kwaderno</strong><p>{optionalMode ? "Hindi naka-encrypt ang entries habang walang lock. Gumawa ng lock kung gusto mong protektahan ang diary gamit ang PIN." : "AES-GCM encryption gamit ang key na derived mula sa PIN o passphrase. I-lock ang app kapag aalis ka."}</p></div><span className="setting-tag">{optionalMode ? "Walang lock" : "Aktibo"}</span></div><div className="setting-row"><span className="setting-symbol">◐</span><div><strong>Itsura</strong><p>Warm paper · soft green</p></div><span className="setting-tag">Default</span></div><div className="setting-row"><span className="setting-symbol">⇧</span><div><strong>Backup at restore</strong><p>Hindi pa available. Kapag nawala ang browser data o device, maaaring mawala ang entries.</p></div><span className="setting-tag">Paparating</span></div></div></div>}
           </section>
         )}
