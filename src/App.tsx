@@ -49,6 +49,7 @@ function App() {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [images, setImages] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<number | undefined>();
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -125,6 +126,7 @@ function App() {
     setEntries([]);
     setTitle('');
     setBody('');
+    setImages([]);
     setEditingId(undefined);
     setEditing(false);
     setPassphrase('');
@@ -137,6 +139,7 @@ function App() {
     setEditingId(entry?.id);
     setTitle(entry?.title ?? '');
     setBody(entry?.body ?? '');
+    setImages(entry?.images ?? []);
     setError('');
     setNotice('');
     setEditing(true);
@@ -147,7 +150,7 @@ function App() {
     setSaving(true);
     setError('');
     try {
-      await saveEntry({ title, body }, editingId);
+      await saveEntry({ title, body, images }, editingId);
       await refreshEntries();
       setEditing(false);
       setNotice('Nai-save sa device na ito. Wala pang backup.');
@@ -176,6 +179,7 @@ function App() {
         <span className="entry-date">{new Date(entry.updatedAt).toLocaleDateString('fil-PH', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()} · {new Date(entry.updatedAt).toLocaleTimeString('fil-PH', { hour: 'numeric', minute: '2-digit' })}</span>
         <strong>{entry.title || 'Walang pamagat'}</strong>
         <p>{entry.body}</p>
+        {entry.images?.length ? <div className="entry-image-strip">{entry.images.slice(0, 3).map((src, index) => <img key={`${entry.id}-image-${index}`} src={src} alt={`Larawan ${index + 1}`} loading="lazy" />)}{entry.images.length > 3 && <span>+{entry.images.length - 3}</span>}</div> : null}
         <span className="entry-arrow">↗</span>
       </button>
       <button className="text-button delete-entry" onClick={() => entry.id !== undefined && void removeEntry(entry.id)}>Punitin ang Pahina</button>
@@ -240,6 +244,7 @@ function App() {
               <div className="paper-kicker">{editingId === undefined ? 'BAGONG PAHINA' : 'INE-EDIT NA PAHINA'} <span>·</span> {dateLabel.toUpperCase()}</div>
               <input className="title-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Bigyan ng pamagat (optional)" aria-label="Entry title" />
               <textarea className="body-input" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Blangko pa ang pahina. Ano'ng nasa isip mo?" aria-label="Diary entry" autoFocus />
+              <div className="image-attachments"><div className="attachment-heading"><div><strong>Mga larawan</strong><small>Hanggang 5 larawan bawat pahina · naka-save kasama ng entry</small></div><label className="attach-button">＋ Mag-attach<input type="file" accept="image/*" multiple hidden onChange={(event) => { const files = Array.from(event.target.files ?? []); event.currentTarget.value = ''; void (async () => { const available = Math.max(0, 5 - images.length); if (!available) { setError('Hanggang 5 larawan lamang bawat pahina.'); return; } const selected = files.slice(0, available); if (files.length > available) setNotice('Hanggang 5 larawan lamang bawat pahina; idinagdag ang unang puwedeng larawan.'); for (const file of selected) { if (!file.type.startsWith('image/')) { setError('Larawan lamang ang puwedeng i-attach.'); continue; } if (file.size > 12 * 1024 * 1024) { setError('May larawang lampas 12 MB. Pumili ng mas maliit na file.'); continue; } try { const dataUrl = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onerror = () => reject(new Error('Hindi mabasa ang larawan.')); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(file); }); const optimized = await new Promise<string>((resolve, reject) => { const image = new Image(); image.onerror = () => reject(new Error('Hindi ma-open ang larawan.')); image.onload = () => { const scale = Math.min(1, 1400 / Math.max(image.naturalWidth, image.naturalHeight)); const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale)); const context = canvas.getContext('2d'); if (!context) { reject(new Error('Hindi ma-process ang larawan.')); return; } context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', 0.82)); }; image.src = dataUrl; }); setImages((current) => current.length < 5 ? [...current, optimized] : current); setError(''); } catch { setError('Hindi naidagdag ang isang larawan. Subukan ang ibang file.'); } } })(); }} /></label></div>{images.length ? <div className="attachment-grid">{images.map((src, index) => <div className="attachment-thumb" key={'attached-' + index}><img src={src} alt={'Kalakip na larawan ' + (index + 1)} /><button type="button" aria-label={'Alisin ang larawan ' + (index + 1)} onClick={() => setImages((current) => current.filter((_, imageIndex) => imageIndex !== index))}>×</button></div>)}</div> : <p className="attachment-empty">Wala pang kalakip na larawan.</p>}</div>
               <div className="editor-bottom"><span className="local-note">{optionalMode ? "Hindi naka-encrypt ang pahina" : "⌑ Encrypted sa device kapag na-save"}</span><button className="primary-button" onClick={() => void saveCurrentEntry()} disabled={saving || (!title.trim() && !body.trim())}>{saving ? 'Sine-save…' : 'I-save ang pahina'} <span>↗</span></button></div>
             </div>
             <p className="prototype-note">{optionalMode ? "Walang lock ang mode na ito, kaya hindi naka-encrypt ang mga entry. Maaari kang gumawa ng lock sa itaas anumang oras." : "Ang laman ng entry ay naka-encrypt sa IndexedDB. Hindi pa encrypted ang lahat ng metadata at wala pang backup. Huwag kalimutan ang PIN o passphrase."}</p>
