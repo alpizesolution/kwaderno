@@ -5,6 +5,9 @@ export interface DiaryEntry {
   title: string;
   body: string;
   images?: string[];
+  tags?: string[];
+  mood?: string;
+  favorite?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -146,7 +149,7 @@ export async function createVault(passphrase: string): Promise<void> {
   const encrypted: EncryptedEntry[] = [];
   for (const entry of legacyEntries) {
     if (entry.id === undefined) throw new Error('May pahinang walang ID. Walang binagong entry; subukang muli.');
-    const content = await encryptText(key, JSON.stringify({ title: entry.title, body: entry.body, images: entry.images ?? [] }));
+    const content = await encryptText(key, JSON.stringify({ title: entry.title, body: entry.body, images: entry.images ?? [], tags: entry.tags ?? [], mood: entry.mood ?? '', favorite: entry.favorite ?? false }));
     encrypted.push({
       id: entry.id,
       ...content,
@@ -220,6 +223,9 @@ export async function listEntries(): Promise<DiaryEntry[]> {
       title: decrypted.title,
       body: decrypted.body,
       images: decrypted.images ?? [],
+      tags: Array.isArray(decrypted.tags) ? decrypted.tags : [],
+      mood: typeof decrypted.mood === 'string' ? decrypted.mood : '',
+      favorite: decrypted.favorite === true,
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
     });
@@ -234,7 +240,7 @@ export async function saveEntry(
   const now = new Date().toISOString();
   if (!activeKey) {
     if (await hasVault()) throw new Error('Naka-lock ang Kwaderno. I-unlock muna bago magpatuloy.');
-    const plainEntry = { title: entry.title.trim(), body: entry.body.trim(), images: entry.images ?? [], updatedAt: now };
+    const plainEntry = { title: entry.title.trim(), body: entry.body.trim(), images: entry.images ?? [], tags: entry.tags ?? [], mood: entry.mood ?? '', favorite: entry.favorite ?? false, updatedAt: now };
     if (id !== undefined) {
       const existing = await db.entries.get(id);
       if (!existing) throw new Error('Hindi na makita ang pahinang ine-edit. I-refresh ang listahan at subukan ulit.');
@@ -248,6 +254,9 @@ export async function saveEntry(
     title: entry.title.trim(),
     body: entry.body.trim(),
     images: entry.images ?? [],
+    tags: entry.tags ?? [],
+    mood: entry.mood ?? '',
+    favorite: entry.favorite ?? false,
   }));
 
   if (id !== undefined) {
@@ -324,6 +333,9 @@ export async function importBackup(text: string, password: string): Promise<{ im
   const incoming = payload.entries.map((entry: any) => {
     if (!entry || typeof entry.title !== 'string' || entry.title.length > 20_000 ||
       typeof entry.body !== 'string' || entry.body.length > 2_000_000 ||
+      (entry.tags !== undefined && (!Array.isArray(entry.tags) || entry.tags.length > 10 || !entry.tags.every((tag: unknown) => typeof tag === 'string' && tag.length <= 30))) ||
+      (entry.mood !== undefined && (typeof entry.mood !== 'string' || entry.mood.length > 40)) ||
+      (entry.favorite !== undefined && typeof entry.favorite !== 'boolean') ||
       !Array.isArray(entry.images) || entry.images.length > 5 ||
       !entry.images.every((image: unknown) =>
         typeof image === 'string' && image.length <= 20 * 1024 * 1024 &&
@@ -332,10 +344,10 @@ export async function importBackup(text: string, password: string): Promise<{ im
       typeof entry.updatedAt !== 'string' || Number.isNaN(Date.parse(entry.updatedAt))) {
       throw new Error('May entry na hindi valid. Walang na-import.');
     }
-    return { title: entry.title, body: entry.body, images: entry.images as string[], createdAt: entry.createdAt, updatedAt: entry.updatedAt };
+    return { title: entry.title, body: entry.body, images: entry.images as string[], tags: (entry.tags ?? []) as string[], mood: (entry.mood ?? '') as string, favorite: entry.favorite === true, createdAt: entry.createdAt, updatedAt: entry.updatedAt };
   });
   const current = await listEntries();
-  const fingerprint = (e: DiaryEntry) => JSON.stringify([e.title, e.body, e.images ?? [], e.createdAt, e.updatedAt]);
+  const fingerprint = (e: DiaryEntry) => JSON.stringify([e.title, e.body, e.images ?? [], e.tags ?? [], e.mood ?? '', e.favorite ?? false, e.createdAt, e.updatedAt]);
   const seen = new Set(current.map(fingerprint));
   const unique = incoming.filter((entry: DiaryEntry) => {
     const key = fingerprint(entry);
@@ -348,7 +360,7 @@ export async function importBackup(text: string, password: string): Promise<{ im
   const encryptedRows: EncryptedEntry[] = [];
   for (const entry of unique) {
     if (key) {
-      const encrypted = await encryptText(key, JSON.stringify({ title: entry.title, body: entry.body, images: entry.images }));
+      const encrypted = await encryptText(key, JSON.stringify({ title: entry.title, body: entry.body, images: entry.images, tags: entry.tags ?? [], mood: entry.mood ?? '', favorite: entry.favorite ?? false }));
       encryptedRows.push({ ...encrypted, createdAt: entry.createdAt, updatedAt: entry.updatedAt });
     } else plainRows.push(entry);
   }
