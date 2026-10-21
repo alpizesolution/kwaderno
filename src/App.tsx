@@ -120,7 +120,7 @@ function App() {
   };
 
   const handleLock = () => {
-    if (editing && (title.trim() || body.trim()) && !window.confirm('May hindi pa nai-save na pagbabago. I-lock at itapon ang mga pagbabagong ito?')) return;
+    if (editing && (title.trim() || body.trim() || images.length > 0) && !window.confirm('May hindi pa nai-save na pagbabago. I-lock at itapon ang mga pagbabagong ito?')) return;
     lockVault();
     setUnlocked(false);
     setEntries([]);
@@ -146,7 +146,7 @@ function App() {
   };
 
   const saveCurrentEntry = async () => {
-    if ((!title.trim() && !body.trim()) || saving) return;
+    if ((!title.trim() && !body.trim() && images.length === 0) || saving) return;
     setSaving(true);
     setError('');
     try {
@@ -234,7 +234,7 @@ function App() {
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark"><span /></span><strong>kwaderno</strong></div>
           <span className="date-top">{dateLabel}</span>
-          <div className="topbar-actions"><button className="text-button lock-button" onClick={() => { if (optionalMode) { if (editing && (title.trim() || body.trim()) && !window.confirm("May hindi pa nai-save na pagbabago. Magpatuloy sa paggawa ng lock?")) return; setOptionalMode(false); setVaultExists(false); setEditing(false); setTitle(""); setBody(""); setEditingId(undefined); setPassphrase(""); setConfirmPassphrase(""); setError(""); } else { handleLock(); } }}>{optionalMode ? "⌑ Gumawa ng lock" : "⌑ I-lock"}</button><button className="avatar-button" aria-label="Open settings" onClick={() => { setPage('settings'); setEditing(false); }}>♡</button></div>
+          <div className="topbar-actions"><button className="text-button lock-button" onClick={() => { if (optionalMode) { if (editing && (title.trim() || body.trim()) && !window.confirm("May hindi pa nai-save na pagbabago. Magpatuloy sa paggawa ng lock?")) return; setOptionalMode(false); setVaultExists(false); setEditing(false); setTitle(""); setBody(""); setImages([]); setEditingId(undefined); setPassphrase(""); setConfirmPassphrase(""); setError(""); } else { handleLock(); } }}>{optionalMode ? "⌑ Gumawa ng lock" : "⌑ I-lock"}</button><button className="avatar-button" aria-label="Open settings" onClick={() => { setPage('settings'); setEditing(false); }}>♡</button></div>
         </header>
 
         {editing ? (
@@ -245,7 +245,7 @@ function App() {
               <input className="title-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Bigyan ng pamagat (optional)" aria-label="Entry title" />
               <textarea className="body-input" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Blangko pa ang pahina. Ano'ng nasa isip mo?" aria-label="Diary entry" autoFocus />
               <div className="image-attachments"><div className="attachment-heading"><div><strong>Mga larawan</strong><small>Hanggang 5 larawan bawat pahina · naka-save kasama ng entry</small></div><label className="attach-button">＋ Mag-attach<input type="file" accept="image/*" multiple hidden onChange={(event) => { const files = Array.from(event.target.files ?? []); event.currentTarget.value = ''; void (async () => { const available = Math.max(0, 5 - images.length); if (!available) { setError('Hanggang 5 larawan lamang bawat pahina.'); return; } const selected = files.slice(0, available); if (files.length > available) setNotice('Hanggang 5 larawan lamang bawat pahina; idinagdag ang unang puwedeng larawan.'); for (const file of selected) { if (!file.type.startsWith('image/')) { setError('Larawan lamang ang puwedeng i-attach.'); continue; } if (file.size > 12 * 1024 * 1024) { setError('May larawang lampas 12 MB. Pumili ng mas maliit na file.'); continue; } try { const dataUrl = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onerror = () => reject(new Error('Hindi mabasa ang larawan.')); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(file); }); const optimized = await new Promise<string>((resolve, reject) => { const image = new Image(); image.onerror = () => reject(new Error('Hindi ma-open ang larawan.')); image.onload = () => { const scale = Math.min(1, 1400 / Math.max(image.naturalWidth, image.naturalHeight)); const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale)); const context = canvas.getContext('2d'); if (!context) { reject(new Error('Hindi ma-process ang larawan.')); return; } context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', 0.82)); }; image.src = dataUrl; }); setImages((current) => current.length < 5 ? [...current, optimized] : current); setError(''); } catch { setError('Hindi naidagdag ang isang larawan. Subukan ang ibang file.'); } } })(); }} /></label></div>{images.length ? <div className="attachment-grid">{images.map((src, index) => <div className="attachment-thumb" key={'attached-' + index}><img src={src} alt={'Kalakip na larawan ' + (index + 1)} /><button type="button" aria-label={'Alisin ang larawan ' + (index + 1)} onClick={() => setImages((current) => current.filter((_, imageIndex) => imageIndex !== index))}>×</button></div>)}</div> : <p className="attachment-empty">Wala pang kalakip na larawan.</p>}</div>
-              <div className="editor-bottom"><span className="local-note">{optionalMode ? "Hindi naka-encrypt ang pahina" : "⌑ Encrypted sa device kapag na-save"}</span><button className="primary-button" onClick={() => void saveCurrentEntry()} disabled={saving || (!title.trim() && !body.trim())}>{saving ? 'Sine-save…' : 'I-save ang pahina'} <span>↗</span></button></div>
+              <div className="editor-bottom"><span className="local-note">{optionalMode ? "Hindi naka-encrypt ang pahina" : "⌑ Encrypted sa device kapag na-save"}</span><button className="primary-button" onClick={() => void saveCurrentEntry()} disabled={saving || (!title.trim() && !body.trim() && images.length === 0)}>{saving ? 'Sine-save…' : 'I-save ang pahina'} <span>↗</span></button></div>
             </div>
             <p className="prototype-note">{optionalMode ? "Walang lock ang mode na ito, kaya hindi naka-encrypt ang mga entry. Maaari kang gumawa ng lock sa itaas anumang oras." : "Ang laman ng entry ay naka-encrypt sa IndexedDB. Hindi pa encrypted ang lahat ng metadata at wala pang backup. Huwag kalimutan ang PIN o passphrase."}</p>
           </section>
