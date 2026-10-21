@@ -63,8 +63,8 @@ function App() {
   const handleVaultSubmit = async () => {
     setError('');
     setNotice('');
-    if (passphrase.length < 10) {
-      setError('Gumamit ng passphrase na hindi bababa sa 10 character.');
+    if (!vaultExists && !/^\d{6}$/.test(passphrase)) {
+      setError('Gumamit ng eksaktong 6-digit PIN (numero lamang).');
       return;
     }
     if (!vaultExists && passphrase !== confirmPassphrase) {
@@ -166,15 +166,15 @@ function App() {
           <span className="vault-mark">⌑</span>
           <span className="eyebrow">KANDADONG KWADERNO</span>
           <h1>{vaultExists ? <>Bumalik sa iyong <em>pahina.</em></> : <>Isara ang mundo.<br />Buksan ang <em>sarili.</em></>}</h1>
-          <p>{vaultExists ? 'Ilagay ang iyong passphrase para ma-decrypt at mabasa ang mga pahina sa device na ito.' : 'Gumawa ng passphrase para i-encrypt ang iyong diary. Ang mga dati mong pahina ay ililipat muna sa encrypted storage.'}</p>
+          <p>{vaultExists ? 'Ilagay ang iyong PIN o dating passphrase para ma-decrypt at mabasa ang mga pahina sa device na ito.' : 'Gumawa ng 6-digit PIN para i-encrypt ang iyong diary. Ang mga dati mong pahina ay ililipat muna sa encrypted storage.'}</p>
           <form onSubmit={(event) => { event.preventDefault(); void handleVaultSubmit(); }} className="vault-form">
-            <label htmlFor="vault-passphrase">{vaultExists ? 'Passphrase' : 'Gumawa ng passphrase'}</label>
-            <input id="vault-passphrase" type="password" autoComplete={vaultExists ? 'current-password' : 'new-password'} value={passphrase} onChange={(event) => setPassphrase(event.target.value)} placeholder="Hindi bababa sa 10 character" minLength={10} required />
-            {!vaultExists && <><label htmlFor="vault-confirm">Ulitin ang passphrase</label><input id="vault-confirm" type="password" autoComplete="new-password" value={confirmPassphrase} onChange={(event) => setConfirmPassphrase(event.target.value)} placeholder="I-type ulit nang eksakto" minLength={10} required /></>}
+            <label htmlFor="vault-passphrase">{vaultExists ? 'PIN / dating passphrase' : 'Gumawa ng 6-digit PIN'}</label>
+            <input id="vault-passphrase" type="password" inputMode={vaultExists ? 'text' : 'numeric'} pattern={vaultExists ? undefined : '[0-9]{6}'} maxLength={vaultExists ? undefined : 6} autoComplete={vaultExists ? 'current-password' : 'new-password'} value={passphrase} onChange={(event) => setPassphrase(vaultExists ? event.target.value : event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder={vaultExists ? 'Ilagay ang PIN o dating passphrase' : '6 na numero'} minLength={vaultExists ? undefined : 6} required />
+            {!vaultExists && <><label htmlFor="vault-confirm">Ulitin ang 6-digit PIN</label><input id="vault-confirm" type="password" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="new-password" value={confirmPassphrase} onChange={(event) => setConfirmPassphrase(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="I-type ulit ang 6 na numero" minLength={6} required /></>}
             {error && <p className="vault-error" role="alert">{error}</p>}
             <button className="primary-button vault-submit" type="submit" disabled={saving}>{saving ? 'Sandali lang…' : vaultExists ? 'I-unlock ang Kwaderno' : 'Gumawa ng Kandado'} <span>↗</span></button>
           </form>
-          <div className="vault-warning"><strong>Mahalagang paalala</strong><p>Hindi namin mase-reset ang nakalimutang passphrase. Kapag nawala ito, hindi na mababasa ang encrypted entries. Walang backup o recovery key sa ngayon.</p></div>
+          <div className="vault-warning"><strong>Mahalagang paalala</strong><p>Hindi namin mase-reset ang nakalimutang PIN o passphrase. Kapag nawala ito, hindi na mababasa ang encrypted entries. Ang 6-digit PIN ay mas madaling hulaan kaysa mahabang passphrase. Walang backup o recovery key sa ngayon.</p></div>
           <p className="vault-footnote">Nananatili sa browser at device na ito. Walang cloud sync.</p>
         </section>
       </main>
