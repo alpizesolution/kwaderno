@@ -35,3 +35,14 @@
 .vault-warning p{font-size:12px;line-height:1.7;color:#6f6b60;margin:5px 0 0}
 .vault-card .vault-footnote{font-size:11px;text-align:center;margin:17px 0 0}
 @media(max-width:560px){.vault-card{padding:25px 21px}.vault-brand{margin-bottom:28px}.topbar-actions{gap:4px}.lock-button{font-size:11px}}
+
+
+/* Phase 4: offline-first PWA feedback */
+.pwa-status{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 28px);padding:12px 15px;background:#fffdf8;border:1px solid #deded4;border-radius:7px;box-shadow:0 8px 30px #342c1d12;color:#435243;font-size:12px;line-height:1.5}
+.pwa-status button{border:0;background:transparent;color:#1E382B;font-weight:700;padding:3px 5px;white-space:nowrap}
+.pwa-offline{border-color:#d7b49e;color:#8c482f}
+.pwa-offline>span{font-size:9px;color:#C85A32}
+.pwa-update{border-color:#b7c6af}
+.pwa-install{position:fixed;right:18px;bottom:18px;z-index:20;border:0;border-radius:999px;padding:12px 16px;background:#1E382B;color:#FAF7F2;box-shadow:0 5px 22px #1e382b24;font-size:12px;font-weight:600}
+.pwa-install:disabled{opacity:.6}
+@media(max-width:650px){.pwa-status{top:8px;font-size:11px;padding:10px 12px}.pwa-install{bottom:82px;right:12px}}
