@@ -217,7 +217,7 @@ export async function listEntries(): Promise<DiaryEntry[]> {
   const entries: DiaryEntry[] = [];
 
   for (const entry of encryptedEntries) {
-    const decrypted = JSON.parse(await decryptText(key, entry.iv, entry.ciphertext)) as Pick<DiaryEntry, 'title' | 'body' | 'images'>;
+    const decrypted = JSON.parse(await decryptText(key, entry.iv, entry.ciphertext)) as Pick<DiaryEntry, 'title' | 'body' | 'images' | 'tags' | 'mood' | 'favorite'>;
     entries.push({
       id: entry.id,
       title: decrypted.title,
