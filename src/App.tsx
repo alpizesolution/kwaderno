@@ -166,7 +166,7 @@ function App() {
           <span className="vault-mark">⌑</span>
           <span className="eyebrow">KANDADONG KWADERNO</span>
           <h1>{vaultExists ? <>Bumalik sa iyong <em>pahina.</em></> : <>Isara ang mundo.<br />Buksan ang <em>sarili.</em></>}</h1>
-          <p>{vaultExists ? 'Ilagay ang iyong PIN o dating passphrase para ma-decrypt at mabasa ang mga pahina sa device na ito.' : 'Gumawa ng 6-digit PIN para i-encrypt ang iyong diary. Ang mga dati mong pahina ay ililipat muna sa encrypted storage.'}</p>
+          <p>{vaultExists ? vaultFormatVersion >= 2 ? 'Ilagay ang iyong 6-digit PIN para ma-decrypt at mabasa ang mga pahina sa device na ito.' : 'Ilagay ang iyong passphrase para ma-decrypt at mabasa ang mga pahina sa device na ito.' : 'Gumawa ng 6-digit PIN para i-encrypt ang iyong diary. Ang mga dati mong pahina ay ililipat muna sa encrypted storage.'}</p>
           <form onSubmit={(event) => { event.preventDefault(); void handleVaultSubmit(); }} className="vault-form">
             <label htmlFor="vault-passphrase">{vaultExists ? 'PIN / dating passphrase' : 'Gumawa ng 6-digit PIN'}</label>
             <input id="vault-passphrase" type="password" inputMode={vaultExists ? 'text' : 'numeric'} pattern={vaultExists ? undefined : '[0-9]{6}'} maxLength={vaultExists ? undefined : 6} autoComplete={vaultExists ? 'current-password' : 'new-password'} value={passphrase} onChange={(event) => setPassphrase(vaultExists ? event.target.value : event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder={vaultExists ? 'Ilagay ang PIN o dating passphrase' : '6 na numero'} minLength={vaultExists ? undefined : 6} required />
