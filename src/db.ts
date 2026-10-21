@@ -74,7 +74,11 @@ function fromBase64(value: string): Uint8Array {
   return bytes;
 }
 
-function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {\n  return Uint8Array.from(bytes).buffer as ArrayBuffer;\n}\n\nfunction randomBytes(length: number): Uint8Array {
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  return Uint8Array.from(bytes).buffer as ArrayBuffer;
+}
+
+function randomBytes(length: number): Uint8Array {
   const bytes = new Uint8Array(length);
   requireCrypto().getRandomValues(bytes);
   return bytes;
@@ -95,18 +99,18 @@ async function deriveKey(passphrase: string, salt: Uint8Array, iterations: numbe
 async function encryptText(key: CryptoKey, plaintext: string): Promise<{ iv: string; ciphertext: string }> {
   const iv = randomBytes(12);
   const ciphertext = await requireCrypto().subtle.encrypt(
-    { name: 'AES-GCM', iv },
+    { name: 'AES-GCM', iv: toArrayBuffer(iv) },
     key,
-    encoder.encode(plaintext),
+    toArrayBuffer(encoder.encode(plaintext)),
   );
   return { iv: toBase64(iv), ciphertext: toBase64(new Uint8Array(ciphertext)) };
 }
 
 async function decryptText(key: CryptoKey, iv: string, ciphertext: string): Promise<string> {
   const plaintext = await requireCrypto().subtle.decrypt(
-    { name: 'AES-GCM', iv: fromBase64(iv), tagLength: 128 },
+    { name: 'AES-GCM', iv: toArrayBuffer(fromBase64(iv)), tagLength: 128 },
     key,
-    fromBase64(ciphertext),
+    toArrayBuffer(fromBase64(ciphertext)),
   );
   return decoder.decode(plaintext);
 }
