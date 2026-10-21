@@ -272,3 +272,84 @@ export async function deleteEntry(id: number): Promise<void> {
   }
   await db.encryptedEntries.delete(id);
 }
+
+const BACKUP_FORMAT = 'kwaderno-backup';
+const BACKUP_VERSION = 1;
+const BACKUP_ITERATIONS = 600_000;
+
+export async function exportBackup(password: string): Promise<string> {
+  if (password.length < 8) throw new Error('Gumamit ng backup password na hindi bababa sa 8 character.');
+  const entries = await listEntries();
+  const payload = { format: BACKUP_FORMAT, version: BACKUP_VERSION, entries };
+  const salt = randomBytes(16);
+  const iv = randomBytes(12);
+  const key = await deriveKey(password, salt, BACKUP_ITERATIONS);
+  const ciphertext = await requireCrypto().subtle.encrypt(
+    { name: 'AES-GCM', iv: toArrayBuffer(iv), tagLength: 128 }, key,
+    toArrayBuffer(encoder.encode(JSON.stringify(payload))),
+  );
+  return JSON.stringify({
+    format: BACKUP_FORMAT, version: BACKUP_VERSION, kdf: 'PBKDF2-SHA-256',
+    iterations: BACKUP_ITERATIONS, salt: toBase64(salt), iv: toBase64(iv),
+    ciphertext: toBase64(new Uint8Array(ciphertext)), createdAt: new Date().toISOString(),
+  }, null, 2);
+}
+
+export async function importBackup(text: string, password: string): Promise<{ imported: number; skipped: number }> {
+  if (text.length > 100 * 1024 * 1024) throw new Error('Lampas 100 MB ang backup file.');
+  let envelope: any;
+  try { envelope = JSON.parse(text); } catch { throw new Error('Hindi mabasa ang backup file.'); }
+  if (envelope?.format !== BACKUP_FORMAT || envelope?.version !== BACKUP_VERSION ||
+      envelope?.kdf !== 'PBKDF2-SHA-256' || !Number.isInteger(envelope?.iterations) ||
+      envelope.iterations < 100_000 || envelope.iterations > 2_000_000 ||
+      typeof envelope.salt !== 'string' || typeof envelope.iv !== 'string' || typeof envelope.ciphertext !== 'string') {
+    throw new Error('Hindi suportado o sira ang backup file.');
+  }
+  let payload: any;
+  try {
+    const key = await deriveKey(password, fromBase64(envelope.salt), envelope.iterations);
+    const plain = await requireCrypto().subtle.decrypt(
+      { name: 'AES-GCM', iv: toArrayBuffer(fromBase64(envelope.iv)), tagLength: 128 },
+      key, toArrayBuffer(fromBase64(envelope.ciphertext)),
+    );
+    payload = JSON.parse(decoder.decode(plain));
+  } catch { throw new Error('Hindi mabuksan ang backup. Suriin ang backup password at file.'); }
+  if (payload?.format !== BACKUP_FORMAT || payload?.version !== BACKUP_VERSION || !Array.isArray(payload.entries) || payload.entries.length > 100_000) {
+    throw new Error('Hindi valid ang laman ng backup.');
+  }
+  const incoming = payload.entries.map((entry: any) => {
+    if (!entry || typeof entry.title !== 'string' || typeof entry.body !== 'string' ||
+      !Array.isArray(entry.images) || entry.images.length > 5 ||
+      !entry.images.every((image: unknown) => typeof image === 'string' && image.startsWith('data:image/')) ||
+      typeof entry.createdAt !== 'string' || Number.isNaN(Date.parse(entry.createdAt)) ||
+      typeof entry.updatedAt !== 'string' || Number.isNaN(Date.parse(entry.updatedAt))) {
+      throw new Error('May entry na hindi valid. Walang na-import.');
+    }
+    return { title: entry.title, body: entry.body, images: entry.images as string[], createdAt: entry.createdAt, updatedAt: entry.updatedAt };
+  });
+  const current = await listEntries();
+  const fingerprint = (e: DiaryEntry) => JSON.stringify([e.title, e.body, e.images ?? [], e.createdAt, e.updatedAt]);
+  const seen = new Set(current.map(fingerprint));
+  const unique = incoming.filter((entry: DiaryEntry) => {
+    const key = fingerprint(entry);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const key = activeKey;
+  const plainRows: DiaryEntry[] = [];
+  const encryptedRows: EncryptedEntry[] = [];
+  for (const entry of unique) {
+    if (key) {
+      const encrypted = await encryptText(key, JSON.stringify({ title: entry.title, body: entry.body, images: entry.images }));
+      encryptedRows.push({ ...encrypted, createdAt: entry.createdAt, updatedAt: entry.updatedAt });
+    } else plainRows.push(entry);
+  }
+  await db.transaction('rw', db.entries, db.encryptedEntries, db.vault, async () => {
+    const vault = await db.vault.get(VAULT_ID);
+    if (Boolean(vault) !== Boolean(key)) throw new Error('Nagbago ang lock state. Walang na-import; i-refresh at subukan ulit.');
+    if (key && encryptedRows.length) await db.encryptedEntries.bulkAdd(encryptedRows);
+    if (!key && plainRows.length) await db.entries.bulkAdd(plainRows);
+  });
+  return { imported: unique.length, skipped: incoming.length - unique.length };
+}
