@@ -103,3 +103,15 @@
 .entry-image-strip img{width:48px;height:48px;border-radius:4px;border:1px solid var(--line)}
 .entry-image-strip>span{display:grid;place-items:center;width:48px;height:48px;border-radius:4px;background:var(--green-soft);color:var(--green);font-size:11px;font-weight:700}
 @media(max-width:650px){.image-attachments{margin-top:15px}.attachment-heading{align-items:flex-start}.attachment-heading small{max-width:210px}.attach-button{padding:8px 10px}.attachment-grid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px}}
+
+/* Phase 3: encrypted backup and safe restore */
+.backup-setting{align-items:flex-start}
+.backup-content{min-width:0;display:grid;gap:10px}
+.backup-content>p,.backup-content>small{font-size:11px;line-height:1.7;color:var(--muted);margin:0}
+.backup-content>label{font-size:11px;font-weight:600}
+.backup-content input:not([type=file]){width:100%;min-height:42px;padding:10px 12px;border:1px solid #deded4;border-radius:5px;background:#fff;color:var(--ink);font:inherit;font-size:12px}
+.backup-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.backup-actions .primary-button{font-size:11px;padding:11px 13px}
+.backup-actions .primary-button:disabled{opacity:.45;cursor:not-allowed}
+.backup-import-label{cursor:pointer}
+@media(max-width:650px){.backup-setting{flex-wrap:wrap}.backup-content{width:100%;flex-basis:100%;order:2}.backup-setting>.setting-tag{margin-left:53px}.backup-actions{align-items:stretch}.backup-actions .primary-button{flex:1;justify-content:center}}
