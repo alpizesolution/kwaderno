@@ -234,7 +234,7 @@ export async function listEntries(): Promise<DiaryEntry[]> {
 }
 
 export async function saveEntry(
-  entry: Pick<DiaryEntry, 'title' | 'body' | 'images'>,
+  entry: Pick<DiaryEntry, 'title' | 'body' | 'images' | 'tags' | 'mood' | 'favorite'>,
   id?: number,
 ): Promise<number> {
   const now = new Date().toISOString();
