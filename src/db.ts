@@ -200,11 +200,6 @@ export function lockVault(): void {
   activeKey = null;
 }
 
-function requireUnlockedKey(): CryptoKey {
-  if (!activeKey) throw new Error('Naka-lock ang Kwaderno. I-unlock muna bago magpatuloy.');
-  return activeKey;
-}
-
 export async function listEntries(): Promise<DiaryEntry[]> {
   if (!activeKey) {
     if (await hasVault()) throw new Error('Naka-lock ang Kwaderno. I-unlock muna bago magpatuloy.');
