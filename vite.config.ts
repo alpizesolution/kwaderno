@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: [],
+      includeAssets: ['icons/kwaderno.svg'],
       manifest: {
         name: 'Kwaderno - Ang Iyong Talaarawan',
         short_name: 'Kwaderno',
@@ -17,7 +17,7 @@ export default defineConfig({
         display: 'standalone',
         background_color: '#FAF7F2',
         theme_color: '#FAF7F2',
-        // Add generated, verified app icons before release.
+        icons: [{ src: '/icons/kwaderno.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
