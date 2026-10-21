@@ -119,6 +119,11 @@ export async function hasVault(): Promise<boolean> {
   return Boolean(await db.vault.get(VAULT_ID));
 }
 
+export async function getVaultFormatVersion(): Promise<number> {
+  const record = await db.vault.get(VAULT_ID);
+  return record?.formatVersion ?? 0;
+}
+
 /**
  * Creates the vault and migrates any existing plaintext entries in one
  * IndexedDB transaction. If encryption or the transaction fails, legacy
