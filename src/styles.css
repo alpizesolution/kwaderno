@@ -11,3 +11,27 @@
 .delete-entry{margin:5px 0 0 3px;color:#a34e35}
 .empty-message{font-size:12px;line-height:1.7;color:#85877d;padding:18px 0}
 .error-toast{border-color:#d9a79b;color:#963f2d}
+
+/* Phase 3: Kandadong Kwaderno vault gate */
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.lock-button{white-space:nowrap}
+.vault-gate{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:28px 18px;background:#FAF7F2;color:#1E382B}
+.vault-card{position:relative;width:min(100%,490px);padding:clamp(26px,5vw,48px);background:#fffdf9;border:1px solid #e8e0d4;border-radius:5px;box-shadow:0 16px 60px #1e382b0b}
+.vault-brand{display:inline-flex;margin-bottom:34px;text-decoration:none;color:inherit}
+.vault-mark{display:grid;place-items:center;width:50px;height:50px;margin:0 0 18px;border:1px solid #d8dfd4;border-radius:50%;font-size:28px;color:#1E382B}
+.vault-card>.eyebrow{display:block;margin-bottom:12px}
+.vault-card h1{font-family:Georgia,'Times New Roman',serif;font-size:clamp(30px,6vw,42px);line-height:1.18;font-weight:400;margin:0 0 14px;letter-spacing:-.035em}
+.vault-card h1 em{color:#C85A32;font-weight:400}
+.vault-card>p{font-size:14px;line-height:1.8;color:#77786e;margin:0 0 24px}
+.vault-form{display:grid;gap:10px}
+.vault-form label{font-size:12px;font-weight:600;margin-top:5px}
+.vault-form input{width:100%;min-height:48px;padding:12px 14px;border:1px solid #deded4;border-radius:4px;background:#fff;font:inherit;color:#1E382B;outline-offset:3px}
+.vault-form input:focus{border-color:#1E382B}
+.vault-submit{width:100%;justify-content:center;margin-top:8px;min-height:48px}
+.vault-submit:disabled{opacity:.65;cursor:wait}
+.vault-error{color:#963f2d!important;font-size:13px!important;margin:4px 0!important;line-height:1.5!important}
+.vault-warning{margin-top:22px;padding:14px 15px;background:#f7f0e5;border-left:3px solid #C85A32}
+.vault-warning strong{font-size:12px}
+.vault-warning p{font-size:12px;line-height:1.7;color:#6f6b60;margin:5px 0 0}
+.vault-card .vault-footnote{font-size:11px;text-align:center;margin:17px 0 0}
+@media(max-width:560px){.vault-card{padding:25px 21px}.vault-brand{margin-bottom:28px}.topbar-actions{gap:4px}.lock-button{font-size:11px}}
