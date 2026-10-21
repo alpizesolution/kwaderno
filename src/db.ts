@@ -74,7 +74,7 @@ function fromBase64(value: string): Uint8Array {
   return bytes;
 }
 
-function randomBytes(length: number): Uint8Array {
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {\n  return Uint8Array.from(bytes).buffer as ArrayBuffer;\n}\n\nfunction randomBytes(length: number): Uint8Array {
   const bytes = new Uint8Array(length);
   requireCrypto().getRandomValues(bytes);
   return bytes;
@@ -82,9 +82,9 @@ function randomBytes(length: number): Uint8Array {
 
 async function deriveKey(passphrase: string, salt: Uint8Array, iterations: number): Promise<CryptoKey> {
   const subtle = requireCrypto().subtle;
-  const material = await subtle.importKey('raw', encoder.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  const material = await subtle.importKey('raw', toArrayBuffer(encoder.encode(passphrase)), 'PBKDF2', false, ['deriveKey']);
   return subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: toArrayBuffer(salt), iterations, hash: 'SHA-256' },
     material,
     { name: 'AES-GCM', length: 256 },
     false,
