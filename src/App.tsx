@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { createVault, deleteEntry, hasVault, listEntries, lockVault, saveEntry, unlockVault, type DiaryEntry } from './db';
+import { createVault, deleteEntry, getVaultFormatVersion, hasVault, listEntries, lockVault, saveEntry, unlockVault, type DiaryEntry } from './db';
 import PwaStatus from './PwaStatus';
 
 type Page = 'today' | 'entries' | 'calendar' | 'settings';
@@ -18,6 +18,7 @@ const dateLabel = new Intl.DateTimeFormat('fil-PH', {
 function App() {
   const [page, setPage] = useState<Page>('today');
   const [vaultExists, setVaultExists] = useState<boolean | null>(null);
+  const [vaultFormatVersion, setVaultFormatVersion] = useState(0);
   const [unlocked, setUnlocked] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [passphrase, setPassphrase] = useState('');
@@ -34,8 +35,8 @@ function App() {
 
   useEffect(() => {
     let cancelled = false;
-    hasVault().then((exists) => {
-      if (!cancelled) setVaultExists(exists);
+    Promise.all([hasVault(), getVaultFormatVersion()]).then(([exists, version]) => {
+      if (!cancelled) { setVaultExists(exists); setVaultFormatVersion(version); }
     }).catch(() => {
       if (!cancelled) setError('Hindi mabuksan ang local storage. Subukang gumamit ng updated browser at i-refresh.');
     }).finally(() => {
