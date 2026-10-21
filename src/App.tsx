@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { deleteEntry, listEntries, saveEntry, type DiaryEntry } from './db';
+import { createVault, deleteEntry, hasVault, listEntries, lockVault, saveEntry, unlockVault, type DiaryEntry } from './db';
 
 type Page = 'today' | 'entries' | 'calendar' | 'settings';
 
@@ -16,6 +16,11 @@ const dateLabel = new Intl.DateTimeFormat('fil-PH', {
 
 function App() {
   const [page, setPage] = useState<Page>('today');
+  const [vaultExists, setVaultExists] = useState<boolean | null>(null);
+  const [unlocked, setUnlocked] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const [passphrase, setPassphrase] = useState('');
+  const [confirmPassphrase, setConfirmPassphrase] = useState('');
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -26,19 +31,78 @@ function App() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
+  useEffect(() => {
+    let cancelled = false;
+    hasVault().then((exists) => {
+      if (!cancelled) setVaultExists(exists);
+    }).catch(() => {
+      if (!cancelled) setError('Hindi mabuksan ang local storage. Subukang gumamit ng updated browser at i-refresh.');
+    }).finally(() => {
+      if (!cancelled) setInitializing(false);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   const refreshEntries = useCallback(async () => {
     setLoading(true);
     try {
       setEntries(await listEntries());
       setError('');
     } catch {
-      setError('Hindi mabuksan ang local diary storage sa device na ito. Subukang i-refresh ang app.');
+      setError('Hindi mabuksan ang mga pahina. Nananatiling naka-encrypt ang data; subukang i-unlock muli.');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { void refreshEntries(); }, [refreshEntries]);
+  useEffect(() => {
+    if (unlocked) void refreshEntries();
+  }, [unlocked, refreshEntries]);
+
+  const handleVaultSubmit = async () => {
+    setError('');
+    setNotice('');
+    if (passphrase.length < 10) {
+      setError('Gumamit ng passphrase na hindi bababa sa 10 character.');
+      return;
+    }
+    if (!vaultExists && passphrase !== confirmPassphrase) {
+      setError('Hindi magkapareho ang passphrase. Pakisuri at subukan ulit.');
+      return;
+    }
+    setSaving(true);
+    try {
+      if (vaultExists) {
+        await unlockVault(passphrase);
+      } else {
+        await createVault(passphrase);
+        setNotice('Nagawa ang Kandadong Kwaderno. Ang mga dating pahina ay inililipat na sa encrypted storage.');
+      }
+      setPassphrase('');
+      setConfirmPassphrase('');
+      setUnlocked(true);
+      setError('');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Hindi na-set up o na-unlock ang Kwaderno. Walang dapat hulaan—subukan ulit.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLock = () => {
+    if (editing && (title.trim() || body.trim()) && !window.confirm('May hindi pa nai-save na pagbabago. I-lock at itapon ang mga pagbabagong ito?')) return;
+    lockVault();
+    setUnlocked(false);
+    setEntries([]);
+    setTitle('');
+    setBody('');
+    setEditingId(undefined);
+    setEditing(false);
+    setPassphrase('');
+    setConfirmPassphrase('');
+    setError('');
+    setNotice('Naka-lock na ang Kandadong Kwaderno.');
+  };
 
   const openEditor = (entry?: DiaryEntry) => {
     setEditingId(entry?.id);
@@ -57,7 +121,7 @@ function App() {
       await saveEntry({ title, body }, editingId);
       await refreshEntries();
       setEditing(false);
-      setNotice('Nakatago sa device na ito. Hindi pa naka-encrypt o naka-backup.');
+      setNotice('Nakatago nang encrypted sa device na ito. Wala pang backup.');
     } catch {
       setError('Hindi na-save ang pahina. Huwag munang isara ang tab; subukan ulit.');
     } finally {
@@ -89,6 +153,33 @@ function App() {
     </div>
   );
 
+  if (initializing) {
+    return <div className="vault-gate"><div className="vault-card"><span className="vault-mark">⌑</span><h1>Binubuksan ang <em>kwaderno…</em></h1><p>Inihahanda ang iyong local vault.</p></div></div>;
+  }
+
+  if (!unlocked) {
+    return (
+      <main className="vault-gate">
+        <section className="vault-card">
+          <a className="brand vault-brand" href="#home"><span className="brand-mark"><span /></span><span><strong>kwaderno</strong><small>sarili mong pahina</small></span></a>
+          <span className="vault-mark">⌑</span>
+          <span className="eyebrow">KANDADONG KWADERNO</span>
+          <h1>{vaultExists ? <>Bumalik sa iyong <em>pahina.</em></> : <>Isara ang mundo.<br />Buksan ang <em>sarili.</em></>}</h1>
+          <p>{vaultExists ? 'Ilagay ang iyong passphrase para ma-decrypt at mabasa ang mga pahina sa device na ito.' : 'Gumawa ng passphrase para i-encrypt ang iyong diary. Ang mga dati mong pahina ay ililipat muna sa encrypted storage.'}</p>
+          <form onSubmit={(event) => { event.preventDefault(); void handleVaultSubmit(); }} className="vault-form">
+            <label htmlFor="vault-passphrase">{vaultExists ? 'Passphrase' : 'Gumawa ng passphrase'}</label>
+            <input id="vault-passphrase" type="password" autoComplete={vaultExists ? 'current-password' : 'new-password'} value={passphrase} onChange={(event) => setPassphrase(event.target.value)} placeholder="Hindi bababa sa 10 character" minLength={10} required />
+            {!vaultExists && <><label htmlFor="vault-confirm">Ulitin ang passphrase</label><input id="vault-confirm" type="password" autoComplete="new-password" value={confirmPassphrase} onChange={(event) => setConfirmPassphrase(event.target.value)} placeholder="I-type ulit nang eksakto" minLength={10} required /></>}
+            {error && <p className="vault-error" role="alert">{error}</p>}
+            <button className="primary-button vault-submit" type="submit" disabled={saving}>{saving ? 'Sandali lang…' : vaultExists ? 'I-unlock ang Kwaderno' : 'Gumawa ng Kandado'} <span>↗</span></button>
+          </form>
+          <div className="vault-warning"><strong>Mahalagang paalala</strong><p>Hindi namin mase-reset ang nakalimutang passphrase. Kapag nawala ito, hindi na mababasa ang encrypted entries. Walang backup o recovery key sa ngayon.</p></div>
+          <p className="vault-footnote">Nananatili sa browser at device na ito. Walang cloud sync.</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -98,17 +189,17 @@ function App() {
         </a>
         <div className="side-label">ANG IYONG KWADERNO</div>
         <nav className="side-nav" aria-label="Main navigation">
-          {navItems.map((item) => <button key={item.id} className={`nav-item ${page === item.id && !editing ? 'active' : ''}`} onClick={() => { setPage(item.id); setEditing(false); }}><span className="nav-icon" aria-hidden="true">{item.icon}</span>{item.label}</button>)}
+          {navItems.map((item) => <button key={item.id} className={`nav-item ${page === item.id && !editing ? 'active' : ''}`} onClick={() => { setPage(item.id); setEditing(false); }}>{<span className="nav-icon" aria-hidden="true">{item.icon}</span>}{item.label}</button>)}
         </nav>
         <div className="sidebar-note"><span className="tiny-lock">⌑</span><p>Walang judgment.<br />Walang tsismis.<br /><em>Kwento mo lang.</em></p></div>
-        <div className="sidebar-foot"><span className="status-dot" /> Local diary · device only</div>
+        <div className="sidebar-foot"><span className="status-dot" /> Encrypted · device only</div>
       </aside>
 
       <main className="main-area">
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark"><span /></span><strong>kwaderno</strong></div>
           <span className="date-top">{dateLabel}</span>
-          <button className="avatar-button" aria-label="Open settings" onClick={() => { setPage('settings'); setEditing(false); }}>♡</button>
+          <div className="topbar-actions"><button className="text-button lock-button" onClick={handleLock}>⌑ I-lock</button><button className="avatar-button" aria-label="Open settings" onClick={() => { setPage('settings'); setEditing(false); }}>♡</button></div>
         </header>
 
         {editing ? (
@@ -118,9 +209,9 @@ function App() {
               <div className="paper-kicker">{editingId === undefined ? 'BAGONG PAHINA' : 'INE-EDIT NA PAHINA'} <span>·</span> {dateLabel.toUpperCase()}</div>
               <input className="title-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Bigyan ng pamagat (optional)" aria-label="Entry title" />
               <textarea className="body-input" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Blangko pa ang pahina. Ano'ng nasa isip mo?" aria-label="Diary entry" autoFocus />
-              <div className="editor-bottom"><span className="local-note">⌑ Naka-save sa device kapag pinindot ang save</span><button className="primary-button" onClick={() => void saveCurrentEntry()} disabled={saving || (!title.trim() && !body.trim())}>{saving ? 'Sine-save…' : 'I-save ang pahina'} <span>↗</span></button></div>
+              <div className="editor-bottom"><span className="local-note">⌑ Encrypted sa device kapag na-save</span><button className="primary-button" onClick={() => void saveCurrentEntry()} disabled={saving || (!title.trim() && !body.trim())}>{saving ? 'Sine-save…' : 'I-save ang pahina'} <span>↗</span></button></div>
             </div>
-            <p className="prototype-note">Nasa device na ito ang mga pahina, pero hindi pa naka-encrypt o naka-backup. Mawawala ang mga ito kung mabura ang browser data o masira/m mawala ang device.</p>
+            <p className="prototype-note">Ang laman ng entry ay naka-encrypt sa IndexedDB. Hindi pa encrypted ang lahat ng metadata at wala pang backup. Huwag kalimutan ang passphrase.</p>
           </section>
         ) : (
           <section className="page-content">
@@ -132,8 +223,8 @@ function App() {
               </div>
             </>}
             {page === 'entries' && <div className="simple-page"><span className="eyebrow">MGA NAITAGONG SALITA</span><h1>Mga <em>Pahina</em></h1>{loading ? <p className="empty-message">Binubuksan ang kwaderno…</p> : entries.length ? <div className="entries-list">{entries.map(renderEntry)}</div> : <div className="empty-paper"><span>✎</span><h2>Blangko pa ang pahina.</h2><p>Kapag handa ka na, nandito lang ang kwaderno mo.</p><button className="primary-button" onClick={() => openEditor()}>＋ Bagong Pahina</button></div>}</div>}
-            {page === 'calendar' && <div className="simple-page"><span className="eyebrow">MGA ARAW NA DUMAAN</span><h1>Mga sandali, <em>unti-unti.</em></h1><div className="empty-paper"><span>☼</span><h2>May sariling oras ang bawat kwento.</h2><p>Ang calendar view ay susunod na idadagdag. Naka-save na muna ang mga pahina sa device na ito.</p></div></div>}
-            {page === 'settings' && <div className="simple-page"><span className="eyebrow">SARILI MONG ESPASYO</span><h1>Mga <em>setting</em></h1><div className="settings-list"><div className="setting-row"><span className="setting-symbol">⌑</span><div><strong>Privacy at seguridad</strong><p>Local storage ay hindi encryption. Ang Kandadong Kwaderno ay susunod na phase.</p></div><span className="setting-tag">Paparating</span></div><div className="setting-row"><span className="setting-symbol">◐</span><div><strong>Itsura</strong><p>Warm paper · soft green</p></div><span className="setting-tag">Default</span></div><div className="setting-row"><span className="setting-symbol">⇧</span><div><strong>Backup at restore</strong><p>Hindi pa available. Itago ang browser data para hindi mawala ang entries.</p></div><span className="setting-tag">Paparating</span></div></div></div>}
+            {page === 'calendar' && <div className="simple-page"><span className="eyebrow">MGA ARAW NA DUMAAN</span><h1>Mga sandali, <em>unti-unti.</em></h1><div className="empty-paper"><span>☼</span><h2>May sariling oras ang bawat kwento.</h2><p>Ang calendar view ay susunod na idadagdag. Naka-encrypt ang mga pahina sa device na ito.</p></div></div>}
+            {page === 'settings' && <div className="simple-page"><span className="eyebrow">SARILI MONG ESPASYO</span><h1>Mga <em>setting</em></h1><div className="settings-list"><div className="setting-row"><span className="setting-symbol">⌑</span><div><strong>Kandadong Kwaderno</strong><p>AES-GCM encryption gamit ang key na derived mula sa passphrase. I-lock ang app kapag aalis ka.</p></div><span className="setting-tag">Aktibo</span></div><div className="setting-row"><span className="setting-symbol">◐</span><div><strong>Itsura</strong><p>Warm paper · soft green</p></div><span className="setting-tag">Default</span></div><div className="setting-row"><span className="setting-symbol">⇧</span><div><strong>Backup at restore</strong><p>Hindi pa available. Kapag nawala ang browser data o device, maaaring mawala ang entries.</p></div><span className="setting-tag">Paparating</span></div></div></div>}
           </section>
         )}
         {error && <div className="toast error-toast" role="alert">{error}</div>}
