@@ -20,6 +20,7 @@ function App() {
   const [vaultExists, setVaultExists] = useState<boolean | null>(null);
   const [vaultFormatVersion, setVaultFormatVersion] = useState(0);
   const [unlocked, setUnlocked] = useState(false);
+  const [optionalMode, setOptionalMode] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [passphrase, setPassphrase] = useState('');
   const [confirmPassphrase, setConfirmPassphrase] = useState('');
@@ -58,8 +59,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (unlocked) void refreshEntries();
-  }, [unlocked, refreshEntries]);
+    if (unlocked || optionalMode) void refreshEntries();
+  }, [unlocked, optionalMode, refreshEntries]);
 
   const handleVaultSubmit = async () => {
     setError('');
@@ -123,7 +124,7 @@ function App() {
       await saveEntry({ title, body }, editingId);
       await refreshEntries();
       setEditing(false);
-      setNotice('Nakatago nang encrypted sa device na ito. Wala pang backup.');
+      setNotice('Nai-save sa device na ito. Wala pang backup.');
     } catch {
       setError('Hindi na-save ang pahina. Huwag munang isara ang tab; subukan ulit.');
     } finally {
@@ -159,7 +160,7 @@ function App() {
     return <div className="vault-gate"><div className="vault-card"><span className="vault-mark">⌑</span><h1>Binubuksan ang <em>kwaderno…</em></h1><p>Inihahanda ang iyong local vault.</p></div></div>;
   }
 
-  if (!unlocked) {
+  if (!unlocked && !optionalMode) {
     return (
       <main className="vault-gate">
         <section className="vault-card">
@@ -175,6 +176,7 @@ function App() {
             {error && <p className="vault-error" role="alert">{error}</p>}
             <button className="primary-button vault-submit" type="submit" disabled={saving}>{saving ? 'Sandali lang…' : vaultExists ? 'I-unlock ang Kwaderno' : 'Gumawa ng Kandado'} <span>↗</span></button>
           </form>
+          {!vaultExists && <button className="text-button" type="button" onClick={() => { setOptionalMode(true); setNotice('Nagpatuloy ka nang walang kandado. Hindi naka-encrypt ang mga pahina sa mode na ito.'); }}>Magpatuloy nang walang lock</button>}
           <div className="vault-warning"><strong>Mahalagang paalala</strong><p>Hindi namin mase-reset ang nakalimutang PIN o passphrase. Kapag nawala ito, hindi na mababasa ang encrypted entries. Ang 6-digit PIN ay mas madaling hulaan kaysa mahabang passphrase. Walang backup o recovery key sa ngayon.</p></div>
           <p className="vault-footnote">Nananatili sa browser at device na ito. Walang cloud sync.</p>
         </section>
@@ -201,7 +203,7 @@ function App() {
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark"><span /></span><strong>kwaderno</strong></div>
           <span className="date-top">{dateLabel}</span>
-          <div className="topbar-actions"><button className="text-button lock-button" onClick={handleLock}>⌑ I-lock</button><button className="avatar-button" aria-label="Open settings" onClick={() => { setPage('settings'); setEditing(false); }}>♡</button></div>
+          <div className="topbar-actions"><button className="text-button lock-button" onClick={() => { if (optionalMode) { if (editing && (title.trim() || body.trim()) && !window.confirm("May hindi pa nai-save na pagbabago. Magpatuloy sa paggawa ng lock?")) return; setOptionalMode(false); setVaultExists(false); setEditing(false); setTitle(""); setBody(""); setEditingId(undefined); setPassphrase(""); setConfirmPassphrase(""); setError(""); } else { handleLock(); } }}>{optionalMode ? "⌑ Gumawa ng lock" : "⌑ I-lock"}</button><button className="avatar-button" aria-label="Open settings" onClick={() => { setPage('settings'); setEditing(false); }}>♡</button></div>
         </header>
 
         {editing ? (
