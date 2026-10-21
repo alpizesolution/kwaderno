@@ -49,3 +49,14 @@
 
 /* Six-digit PIN input */
 .vault-form input[inputmode="numeric"]{letter-spacing:.28em;font-variant-numeric:tabular-nums}
+
+/* Phase 2: diary search and sorting */
+.entry-tools{display:grid;gap:9px;margin:22px 0 18px;padding:15px;background:#fffdf8;border:1px solid var(--line);border-radius:7px}
+.entry-search-label{font-size:11px;font-weight:600;color:var(--ink)}
+.entry-search{width:100%;min-height:43px;padding:10px 12px;border:1px solid #deded4;border-radius:5px;background:#fff;color:var(--ink);font-size:13px}
+.entry-search::placeholder{color:#a4a196}
+.entry-tools-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--muted);font-size:10px}
+.entry-tools-bottom label{display:flex;align-items:center;gap:6px}
+.entry-tools-bottom select{max-width:135px;padding:6px 7px;border:1px solid var(--line);border-radius:4px;background:#fffdf8;color:var(--ink);font:inherit}
+.search-empty{margin-top:12px}
+@media(max-width:650px){.entry-tools{padding:12px}.entry-tools-bottom{align-items:flex-start}.entry-tools-bottom label{gap:4px}.entry-tools-bottom select{max-width:115px}}
