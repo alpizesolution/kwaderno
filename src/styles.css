@@ -46,3 +46,6 @@
 .pwa-install{position:fixed;right:18px;bottom:18px;z-index:20;border:0;border-radius:999px;padding:12px 16px;background:#1E382B;color:#FAF7F2;box-shadow:0 5px 22px #1e382b24;font-size:12px;font-weight:600}
 .pwa-install:disabled{opacity:.6}
 @media(max-width:650px){.pwa-status{top:8px;font-size:11px;padding:10px 12px}.pwa-install{bottom:82px;right:12px}}
+
+/* Six-digit PIN input */
+.vault-form input[inputmode="numeric"]{letter-spacing:.28em;font-variant-numeric:tabular-nums}
