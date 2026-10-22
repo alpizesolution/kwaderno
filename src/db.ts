@@ -284,7 +284,6 @@ export async function saveEntry(
       ...content,
       updatedAt: now,
     });
-    assertActiveKey(key);
     return id;
   }
 
@@ -294,7 +293,6 @@ export async function saveEntry(
     createdAt: now,
     updatedAt: now,
   });
-  assertActiveKey(key);
   return newId;
 }
 
