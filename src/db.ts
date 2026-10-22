@@ -199,10 +199,10 @@ export async function unlockVault(passphrase: string): Promise<void> {
   const key = await deriveKey(passphrase, fromBase64(record.salt), record.iterations);
   try {
     const check = await decryptText(key, record.verifierIv, record.verifierCiphertext);
-    if (check !== CHECK_TEXT) throw new Error('Maling passphrase.');
+    if (check !== CHECK_TEXT) throw new Error('Maling PIN o dating access key.');
   } catch {
     activeKey = null;
-    throw new Error('Hindi tumugma ang passphrase. Subukan ulit.');
+    throw new Error('Hindi tumugma ang PIN o dating access key. Subukan ulit.');
   }
   activeKey = key;
 }
