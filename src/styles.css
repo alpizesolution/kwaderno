@@ -178,3 +178,40 @@
 .calendar-mood-chips>span{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border-radius:5px;background:#fffdf8;border:1px solid #e7e2d8;color:var(--ink);font-size:10px}
 .calendar-mood-chips b{color:var(--muted);font-size:9px}
 @media(max-width:650px){.insights-panel{padding:15px;margin-bottom:26px}.insights-heading h2{font-size:19px}.insights-stats{gap:6px}.insight-stat{padding:10px 8px}.insight-stat strong{font-size:22px}.insight-stat>span:last-child{font-size:9px}.mood-bar-row{grid-template-columns:20px minmax(72px,auto) minmax(30px,1fr) 16px;gap:6px}.calendar-insights{grid-template-columns:1fr;gap:14px;padding:15px;margin-top:-13px}}
+
+
+/* Phase 7: personalization */
+.app-shell[data-theme="sage"]{--paper:#FAF7F2;--ink:#25352b;--green:#1E382B;--green-soft:#e7ece3;--terracotta:#C85A32;--muted:#85877d;--line:#e9e3d8}
+.app-shell[data-theme="rose"]{--paper:#fff6f5;--ink:#493137;--green:#713f50;--green-soft:#f3e2e7;--terracotta:#b85e73;--muted:#917b80;--line:#ead8dc}
+.app-shell[data-theme="ocean"]{--paper:#f3f8fb;--ink:#243844;--green:#24556b;--green-soft:#dcecf2;--terracotta:#287f91;--muted:#73858d;--line:#d9e5e9}
+.app-shell[data-theme="lavender"]{--paper:#f8f5fc;--ink:#352d43;--green:#594675;--green-soft:#e9e1f3;--terracotta:#9870b4;--muted:#898095;--line:#e5ddec}
+.app-shell[data-theme="rose"] .sidebar,.app-shell[data-theme="rose"] .topbar{background:#fff8f7}
+.app-shell[data-theme="ocean"] .sidebar,.app-shell[data-theme="ocean"] .topbar{background:#f6fafc}
+.app-shell[data-theme="lavender"] .sidebar,.app-shell[data-theme="lavender"] .topbar{background:#fbf8fe}
+.app-shell[data-theme="rose"] .nav-item.active,.app-shell[data-theme="rose"] .write-card{background:#f3e2e7}
+.app-shell[data-theme="ocean"] .nav-item.active,.app-shell[data-theme="ocean"] .write-card{background:#dcecf2}
+.app-shell[data-theme="lavender"] .nav-item.active,.app-shell[data-theme="lavender"] .write-card{background:#e9e1f3}
+.app-shell[data-theme="rose"] .insight-stat,.app-shell[data-theme="rose"] .calendar-insights{background:#fff8f7}
+.app-shell[data-theme="ocean"] .insight-stat,.app-shell[data-theme="ocean"] .calendar-insights{background:#f6fafc}
+.app-shell[data-theme="lavender"] .insight-stat,.app-shell[data-theme="lavender"] .calendar-insights{background:#fbf8fe}
+.daily-prompt{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 21px;margin:-13px 0 25px;border:1px solid var(--line);border-radius:8px;background:var(--green-soft)}
+.daily-prompt-copy{min-width:0}
+.daily-prompt-copy .eyebrow{display:block}
+.daily-prompt-copy p{font-family:'Playfair Display',serif;font-size:17px;line-height:1.5;color:var(--ink);margin:8px 0 0}
+.daily-prompt-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px}
+.prompt-use-button{border:0;background:transparent;color:var(--green);font-size:11px;font-weight:700;white-space:nowrap}
+.prompt-use-button:hover{text-decoration:underline}
+.personalization-setting{align-items:flex-start}
+.personalization-content{display:grid;gap:9px;flex:1;min-width:0}
+.personalization-content>p{margin:0 0 5px;color:var(--muted);font-size:11px;line-height:1.7}
+.personalization-content>label:not(.prompt-toggle){font-size:11px;font-weight:600;color:var(--ink);margin-top:3px}
+.personalization-content select{width:min(100%,360px);padding:10px 12px;border:1px solid var(--line);border-radius:5px;background:var(--paper);color:var(--ink);font-size:12px}
+.prompt-toggle{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink);cursor:pointer}
+.prompt-toggle input{width:17px;height:17px;accent-color:var(--green)}
+.app-shell[data-font-size="small"] .body-input,.app-shell[data-font-size="small"] .entry-preview p{font-size:90%}
+.app-shell[data-font-size="large"] .body-input,.app-shell[data-font-size="large"] .entry-preview p{font-size:120%}
+.app-shell[data-font-size="large"] .body-input{line-height:2.15}
+.app-shell[data-font-size="small"] .body-input{line-height:1.8}
+@media(max-width:650px){.daily-prompt{align-items:flex-start;flex-direction:column;padding:15px;margin-top:-7px}.daily-prompt-actions{width:100%;justify-content:space-between}.daily-prompt-copy p{font-size:16px}.personalization-setting{gap:11px}.personalization-setting>.setting-tag{font-size:9px}.personalization-content select{width:100%}}
+
+.app-shell{background:var(--paper);color:var(--ink)}
