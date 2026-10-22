@@ -94,8 +94,8 @@ function App() {
   const [unlocked, setUnlocked] = useState(false);
   const [optionalMode, setOptionalMode] = useState(false);
   const [initializing, setInitializing] = useState(true);
-  const [passphrase, setPassphrase] = useState('');
-  const [confirmPassphrase, setConfirmPassphrase] = useState('');
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
   const [showSecurityDetails, setShowSecurityDetails] = useState(false);
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState('');
@@ -187,24 +187,24 @@ function App() {
   const handleVaultSubmit = async () => {
     setError('');
     setNotice('');
-    if (!vaultExists && !/^\d{6}$/.test(passphrase)) {
+    if (!vaultExists && !/^\d{6}$/.test(pin)) {
       setError('Gumamit ng eksaktong 6-digit PIN (numero lamang).');
       return;
     }
-    if (!vaultExists && passphrase !== confirmPassphrase) {
+    if (!vaultExists && pin !== confirmPin) {
       setError('Hindi magkapareho ang PIN. Pakisuri at subukan ulit.');
       return;
     }
     setSaving(true);
     try {
       if (vaultExists) {
-        await unlockVault(passphrase);
+        await unlockVault(pin);
       } else {
-        await createVault(passphrase);
+        await createVault(pin);
         setNotice('Nagawa ang Kandadong Kwaderno. Ang mga dating pahina ay inililipat na sa encrypted storage.');
       }
-      setPassphrase('');
-      setConfirmPassphrase('');
+      setPin('');
+      setConfirmPin('');
       setUnlocked(true);
       setError('');
     } catch (cause) {
@@ -228,8 +228,8 @@ function App() {
     setViewingImage(null);
     setEditingId(undefined);
     setEditing(false);
-    setPassphrase('');
-    setConfirmPassphrase('');
+    setPin('');
+    setConfirmPin('');
     setError('');
     setNotice('Naka-lock na ang Kandadong Kwaderno.');
   };
@@ -305,10 +305,10 @@ function App() {
           <h1>{vaultExists ? <>Bumalik sa iyong <em>pahina.</em></> : <>Isara ang mundo.<br />Buksan ang <em>sarili.</em></>}</h1>
           <p>{vaultExists ? vaultFormatVersion >= 2 ? 'Ilagay ang iyong 6-digit PIN para mabuksan ang mga pahina sa device na ito.' : 'Lumang lock format ang vault na ito. Ilagay ang dating access key upang mabuksan ang iyong mga pahina.' : 'Gumawa ng 6-digit PIN para i-encrypt ang iyong diary. Ililipat sa encrypted storage ang mga dati mong pahina.'}</p>
           <form onSubmit={(event) => { event.preventDefault(); void handleVaultSubmit(); }} className="vault-form">
-            <label htmlFor="vault-passphrase">{vaultExists ? (vaultFormatVersion >= 2 ? 'Ilagay ang 6-digit PIN' : 'Dating access key') : 'Gumawa ng 6-digit PIN'}</label>
-            <input id="vault-passphrase" className="pin-input" type="password" inputMode={vaultExists && vaultFormatVersion < 2 ? 'text' : 'numeric'} pattern={vaultExists && vaultFormatVersion < 2 ? undefined : '[0-9]{6}'} maxLength={vaultExists && vaultFormatVersion < 2 ? undefined : 6} autoComplete={vaultExists ? 'current-password' : 'new-password'} value={passphrase} onChange={(event) => setPassphrase(vaultExists && vaultFormatVersion < 2 ? event.target.value : event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder={vaultExists && vaultFormatVersion < 2 ? 'Dating access key' : '••••••'} aria-describedby="pin-help" minLength={vaultExists && vaultFormatVersion < 2 ? undefined : 6} required />
+            <label htmlFor="vault-pin">{vaultExists ? (vaultFormatVersion >= 2 ? 'Ilagay ang 6-digit PIN' : 'Dating access key') : 'Gumawa ng 6-digit PIN'}</label>
+            <input id="vault-pin" className="pin-input" type="password" inputMode={vaultExists && vaultFormatVersion < 2 ? 'text' : 'numeric'} pattern={vaultExists && vaultFormatVersion < 2 ? undefined : '[0-9]{6}'} maxLength={vaultExists && vaultFormatVersion < 2 ? undefined : 6} autoComplete={vaultExists ? 'current-password' : 'new-password'} value={pin} onChange={(event) => setPin(vaultExists && vaultFormatVersion < 2 ? event.target.value : event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder={vaultExists && vaultFormatVersion < 2 ? 'Dating access key' : '••••••'} aria-describedby="pin-help" minLength={vaultExists && vaultFormatVersion < 2 ? undefined : 6} required />
             <small id="pin-help" className="pin-help">{vaultExists && vaultFormatVersion < 2 ? 'Ginagamit ng lumang vault ang dating access key.' : '6 na numero lamang · walang letra o simbolo'}</small>
-            {!vaultExists && <><label htmlFor="vault-confirm">Kumpirmahin ang PIN</label><input id="vault-confirm" className="pin-input" type="password" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="new-password" value={confirmPassphrase} onChange={(event) => setConfirmPassphrase(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="••••••" aria-describedby="pin-confirm-help" minLength={6} required /><small id="pin-confirm-help" className="pin-help">Ilagay muli ang parehong 6 na numero.</small></>}
+            {!vaultExists && <><label htmlFor="vault-confirm">Kumpirmahin ang PIN</label><input id="vault-confirm" className="pin-input" type="password" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="new-password" value={confirmPin} onChange={(event) => setConfirmPin(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="••••••" aria-describedby="pin-confirm-help" minLength={6} required /><small id="pin-confirm-help" className="pin-help">Ilagay muli ang parehong 6 na numero.</small></>}
             {error && <p className="vault-error" role="alert">{error}</p>}
             <button className="primary-button vault-submit" type="submit" disabled={saving}>{saving ? 'Sandali lang…' : vaultExists ? 'I-unlock ang Kwaderno' : 'Gumawa ng Kandado'} <span>↗</span></button>
           </form>
@@ -340,7 +340,7 @@ function App() {
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark"><span /></span><strong>Kwadernoko</strong></div>
           <span className="date-top">{dateLabel}</span>
-          <div className="topbar-actions"><button className="text-button lock-button" onClick={() => { if (optionalMode) { if (editing && (title.trim() || body.trim()) && !window.confirm("May hindi pa nai-save na pagbabago. Magpatuloy sa paggawa ng lock?")) return; setOptionalMode(false); setVaultExists(false); setEditing(false); setTitle(""); setBody(""); setImages([]); setEditingId(undefined); setPassphrase(""); setConfirmPassphrase(""); setError(""); } else { handleLock(); } }}>{optionalMode ? "⌑ Gumawa ng lock" : "⌑ I-lock"}</button><button className="avatar-button" aria-label="Open settings" onClick={() => { setPage('settings'); setEditing(false); }}>♡</button></div>
+          <div className="topbar-actions"><button className="text-button lock-button" onClick={() => { if (optionalMode) { if (editing && (title.trim() || body.trim()) && !window.confirm("May hindi pa nai-save na pagbabago. Magpatuloy sa paggawa ng lock?")) return; setOptionalMode(false); setVaultExists(false); setEditing(false); setTitle(""); setBody(""); setImages([]); setEditingId(undefined); setPin(""); setConfirmPin(""); setError(""); } else { handleLock(); } }}>{optionalMode ? "⌑ Gumawa ng lock" : "⌑ I-lock"}</button><button className="avatar-button" aria-label="Open settings" onClick={() => { setPage('settings'); setEditing(false); }}>♡</button></div>
         </header>
 
         {editing ? (
