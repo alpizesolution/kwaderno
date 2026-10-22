@@ -215,3 +215,40 @@
 @media(max-width:650px){.daily-prompt{align-items:flex-start;flex-direction:column;padding:15px;margin-top:-7px}.daily-prompt-actions{width:100%;justify-content:space-between}.daily-prompt-copy p{font-size:16px}.personalization-setting{gap:11px}.personalization-setting>.setting-tag{font-size:9px}.personalization-content select{width:100%}}
 
 .app-shell{background:var(--paper);color:var(--ink)}
+
+
+/* Vault gate polish: clearer PIN entry and safer small-screen spacing */
+.vault-gate{padding:clamp(18px,4vw,34px);padding-top:max(clamp(18px,4vw,34px),env(safe-area-inset-top));padding-bottom:max(clamp(18px,4vw,34px),env(safe-area-inset-bottom))}
+.vault-card{width:min(100%,490px);min-width:0}
+.vault-form input{min-height:52px}
+.vault-form .pin-input{font-size:20px;letter-spacing:.3em;font-variant-numeric:tabular-nums}
+.vault-form .pin-input[inputmode="numeric"]{text-align:center}
+.pin-help{display:block;margin-top:-4px;color:#85877d;font-size:11px;line-height:1.5}
+.vault-form .vault-submit{width:100%;justify-content:space-between;min-height:52px;margin-top:7px}
+.security-details-toggle{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:5px 0;border:0;background:transparent;color:#765238;font-size:11px;font-weight:700}
+.security-details-toggle span{display:grid;place-items:center;width:20px;height:20px;border:1px solid #d9c9b3;border-radius:50%;font-size:14px}
+.vault-warning .security-details{margin-top:9px;padding-top:9px;border-top:1px solid #e6d9c7}
+@media(max-width:560px){
+  .vault-gate{display:flex;align-items:flex-start;justify-content:center;padding: max(14px,env(safe-area-inset-top)) 12px max(20px,env(safe-area-inset-bottom))}
+  .vault-card{width:100%;max-width:440px;margin:auto 0;padding:22px 18px;border-radius:12px;box-shadow:0 10px 35px #1e382b0a}
+  .vault-brand{margin-bottom:22px;gap:10px}
+  .vault-brand strong{font-size:22px}
+  .vault-card>.vault-mark{margin-bottom:8px}
+  .vault-card h1{font-size:clamp(29px,8vw,35px);line-height:1.14;margin-bottom:12px}
+  .vault-card>p{font-size:13px;line-height:1.65;margin-bottom:19px}
+  .vault-form{gap:9px}
+  .vault-form label{font-size:12px;margin-top:4px}
+  .vault-form input{min-height:54px;padding:13px 12px;border-radius:7px}
+  .vault-form .pin-input{font-size:22px;letter-spacing:.38em}
+  .vault-form .vault-submit{margin-top:8px;padding:15px 16px;font-size:13px}
+  .vault-card>.text-button{display:block;width:100%;padding:13px 8px;margin-top:4px;text-align:center}
+  .vault-warning{margin-top:17px;padding:12px 13px;border-radius:0 7px 7px 0}
+  .vault-warning p{font-size:11px;line-height:1.6}
+  .vault-card .vault-footnote{font-size:10px;line-height:1.6}
+  .setting-row{align-items:flex-start}
+  .setting-symbol{flex:0 0 36px;width:36px;height:36px}
+  .setting-row>div{min-width:0}
+  .setting-tag{flex-shrink:0;max-width:90px;white-space:normal;text-align:center}
+  .backup-actions{display:grid;grid-template-columns:1fr}
+  .backup-actions .primary-button{width:100%;min-height:46px}
+}

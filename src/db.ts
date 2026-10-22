@@ -95,9 +95,9 @@ function randomBytes(length: number): Uint8Array {
   return bytes;
 }
 
-async function deriveKey(passphrase: string, salt: Uint8Array, iterations: number): Promise<CryptoKey> {
+async function deriveKey(secret: string, salt: Uint8Array, iterations: number): Promise<CryptoKey> {
   const subtle = requireCrypto().subtle;
-  const material = await subtle.importKey('raw', toArrayBuffer(encoder.encode(passphrase)), 'PBKDF2', false, ['deriveKey']);
+  const material = await subtle.importKey('raw', toArrayBuffer(encoder.encode(secret)), 'PBKDF2', false, ['deriveKey']);
   return subtle.deriveKey(
     { name: 'PBKDF2', salt: toArrayBuffer(salt), iterations, hash: 'SHA-256' },
     material,
@@ -140,13 +140,13 @@ export async function getVaultFormatVersion(): Promise<number> {
  * IndexedDB transaction. If encryption or the transaction fails, legacy
  * entries are left untouched.
  */
-export async function createVault(passphrase: string): Promise<void> {
+export async function createVault(pin: string): Promise<void> {
   requireCrypto();
-  if (!/^\d{6}$/.test(passphrase)) throw new Error('Gumamit ng eksaktong 6-digit PIN.');
+  if (!/^\d{6}$/.test(pin)) throw new Error('Gumamit ng eksaktong 6-digit PIN.');
   if (await hasVault()) throw new Error('May Kandadong Kwaderno na. I-unlock muna ito.');
 
   const salt = randomBytes(16);
-  const key = await deriveKey(passphrase, salt, PBKDF2_ITERATIONS);
+  const key = await deriveKey(pin, salt, PBKDF2_ITERATIONS);
   const verifier = await encryptText(key, CHECK_TEXT);
   const legacyEntries = await db.entries.toArray();
 
@@ -189,20 +189,20 @@ export async function createVault(passphrase: string): Promise<void> {
   activeKey = key;
 }
 
-export async function unlockVault(passphrase: string): Promise<void> {
+export async function unlockVault(pinOrLegacyKey: string): Promise<void> {
   requireCrypto();
   const record = await db.vault.get(VAULT_ID);
   if (!record) throw new Error('Wala pang vault. I-set up ang Kandadong Kwaderno.');
-  if (record.formatVersion >= 2 && !/^\d{6}$/.test(passphrase)) {
+  if (record.formatVersion >= 2 && !/^\d{6}$/.test(pinOrLegacyKey)) {
     throw new Error('Ilagay ang iyong 6-digit PIN.');
   }
-  const key = await deriveKey(passphrase, fromBase64(record.salt), record.iterations);
+  const key = await deriveKey(pinOrLegacyKey, fromBase64(record.salt), record.iterations);
   try {
     const check = await decryptText(key, record.verifierIv, record.verifierCiphertext);
-    if (check !== CHECK_TEXT) throw new Error('Maling passphrase.');
+    if (check !== CHECK_TEXT) throw new Error('Maling PIN o dating access key.');
   } catch {
     activeKey = null;
-    throw new Error('Hindi tumugma ang passphrase. Subukan ulit.');
+    throw new Error('Hindi tumugma ang PIN o dating access key. Subukan ulit.');
   }
   activeKey = key;
 }
