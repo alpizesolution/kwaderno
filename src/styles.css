@@ -213,3 +213,5 @@
 .app-shell[data-font-size="large"] .body-input{line-height:2.15}
 .app-shell[data-font-size="small"] .body-input{line-height:1.8}
 @media(max-width:650px){.daily-prompt{align-items:flex-start;flex-direction:column;padding:15px;margin-top:-7px}.daily-prompt-actions{width:100%;justify-content:space-between}.daily-prompt-copy p{font-size:16px}.personalization-setting{gap:11px}.personalization-setting>.setting-tag{font-size:9px}.personalization-content select{width:100%}}
+
+.app-shell{background:var(--paper);color:var(--ink)}
