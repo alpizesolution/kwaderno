@@ -145,3 +145,36 @@
 .image-lightbox>button{position:absolute;top:15px;right:18px;width:42px;height:42px;border:1px solid #ffffff70;border-radius:50%;background:#1e382b;color:#fff;font-size:28px;line-height:1}
 @media(max-width:850px){.mood-options{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:650px){.entry-metadata-editor{grid-template-columns:1fr}.entry-metadata-editor .favorite-toggle{width:100%;justify-content:center}.mood-options{grid-template-columns:repeat(4,minmax(0,1fr))}.mood-option{min-height:62px}.image-lightbox{padding:14px}}
+
+
+/* Phase 6: private diary insights */
+.insights-panel{margin:0 0 32px;padding:21px;background:#fffdf8;border:1px solid var(--line);border-radius:8px}
+.insights-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:17px}
+.insights-heading h2{margin:7px 0 0;font-family:'Playfair Display',serif;font-size:21px;font-weight:500}
+.insights-period{padding:6px 8px;border-radius:4px;background:#edf0e8;color:#596b53;font-size:9px;white-space:nowrap}
+.insights-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.insight-stat{display:grid;align-content:start;gap:5px;min-width:0;padding:13px 12px;border:1px solid #eee8de;border-radius:6px;background:#faf7f2}
+.insight-icon{font-size:18px;color:var(--terracotta)}
+.insight-stat strong{font-family:'Playfair Display',serif;font-size:25px;font-weight:500;line-height:1.2;color:var(--green)}
+.insight-stat>span:last-child{font-size:10px;line-height:1.4;color:var(--muted)}
+.mood-insights{margin-top:19px}
+.mood-insights-title{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px}
+.mood-insights-title>span{color:var(--muted);font-size:10px}
+.mood-bars{display:grid;gap:10px;margin-top:13px}
+.mood-bar-row{display:grid;grid-template-columns:22px minmax(88px,auto) minmax(40px,1fr) 20px;align-items:center;gap:8px;font-size:10px}
+.mood-bar-icon{font-size:16px}
+.mood-bar-name{color:var(--ink)}
+.mood-bar-track{height:7px;overflow:hidden;border-radius:999px;background:#eeeae1}
+.mood-bar-track>span{display:block;height:100%;border-radius:999px;background:#8c9b82}
+.mood-bar-row>strong{text-align:right;font-size:10px;color:var(--muted)}
+.insights-empty{margin:12px 0 0;font-size:11px;line-height:1.7;color:var(--muted)}
+.calendar-insights{display:grid;grid-template-columns:minmax(130px,.7fr) minmax(0,1.3fr);gap:18px;margin:-9px 0 28px;padding:17px 19px;border:1px solid var(--line);border-radius:7px;background:#f8f5ee}
+.calendar-insights>div:first-child{display:grid;align-content:start;gap:5px}
+.calendar-insights>div:first-child>strong{font-family:'Playfair Display',serif;font-size:23px;font-weight:500;color:var(--green)}
+.calendar-insights small{font-size:10px;line-height:1.6;color:var(--muted)}
+.calendar-mood-summary{display:grid;align-content:start;gap:9px}
+.calendar-mood-summary>strong{font-size:11px}
+.calendar-mood-chips{display:flex;flex-wrap:wrap;gap:6px}
+.calendar-mood-chips>span{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border-radius:5px;background:#fffdf8;border:1px solid #e7e2d8;color:var(--ink);font-size:10px}
+.calendar-mood-chips b{color:var(--muted);font-size:9px}
+@media(max-width:650px){.insights-panel{padding:15px;margin-bottom:26px}.insights-heading h2{font-size:19px}.insights-stats{gap:6px}.insight-stat{padding:10px 8px}.insight-stat strong{font-size:22px}.insight-stat>span:last-child{font-size:9px}.mood-bar-row{grid-template-columns:20px minmax(72px,auto) minmax(30px,1fr) 16px;gap:6px}.calendar-insights{grid-template-columns:1fr;gap:14px;padding:15px;margin-top:-13px}}
