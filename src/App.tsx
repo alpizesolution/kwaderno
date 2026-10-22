@@ -298,7 +298,7 @@ function App() {
     return (
       <main className="vault-gate">
         <section className="vault-card">
-          <a className="brand vault-brand" href="#home"><span className="brand-mark"><span /></span><span><strong>kwaderno</strong><small>sarili mong pahina</small></span></a>
+          <a className="brand vault-brand" href="#home"><span className="brand-mark"><span /></span><span><strong>Kwadernoko</strong><small>sarili mong pahina</small></span></a>
           <span className="vault-mark">⌑</span>
           <span className="eyebrow">KANDADONG KWADERNO</span>
           <h1>{vaultExists ? <>Bumalik sa iyong <em>pahina.</em></> : <>Isara ang mundo.<br />Buksan ang <em>sarili.</em></>}</h1>
@@ -336,7 +336,7 @@ function App() {
 
       <main className="main-area">
         <header className="topbar">
-          <div className="mobile-brand"><span className="brand-mark"><span /></span><strong>kwaderno</strong></div>
+          <div className="mobile-brand"><span className="brand-mark"><span /></span><strong>Kwadernoko</strong></div>
           <span className="date-top">{dateLabel}</span>
           <div className="topbar-actions"><button className="text-button lock-button" onClick={() => { if (optionalMode) { if (editing && (title.trim() || body.trim()) && !window.confirm("May hindi pa nai-save na pagbabago. Magpatuloy sa paggawa ng lock?")) return; setOptionalMode(false); setVaultExists(false); setEditing(false); setTitle(""); setBody(""); setImages([]); setEditingId(undefined); setPassphrase(""); setConfirmPassphrase(""); setError(""); } else { handleLock(); } }}>{optionalMode ? "⌑ Gumawa ng lock" : "⌑ I-lock"}</button><button className="avatar-button" aria-label="Open settings" onClick={() => { setPage('settings'); setEditing(false); }}>♡</button></div>
         </header>
