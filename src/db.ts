@@ -311,7 +311,11 @@ const BACKUP_ITERATIONS = 600_000;
 
 export async function exportBackup(password: string): Promise<string> {
   if (password.length < 8) throw new Error('Gumamit ng backup password na hindi bababa sa 8 character.');
+  const vaultKeyAtStart = activeKey;
   const entries = await listEntries();
+  if (activeKey !== vaultKeyAtStart) {
+    throw new Error('Nagbago ang lock state habang ginagawa ang backup. Walang na-download na backup; i-unlock at subukang muli.');
+  }
   const payload = { format: BACKUP_FORMAT, version: BACKUP_VERSION, entries };
   const salt = randomBytes(16);
   const iv = randomBytes(12);
@@ -320,6 +324,9 @@ export async function exportBackup(password: string): Promise<string> {
     { name: 'AES-GCM', iv: toArrayBuffer(iv), tagLength: 128 }, key,
     toArrayBuffer(encoder.encode(JSON.stringify(payload))),
   );
+  if (activeKey !== vaultKeyAtStart) {
+    throw new Error('Nagbago ang lock state habang ginagawa ang backup. Walang na-download na backup; i-unlock at subukang muli.');
+  }
   return JSON.stringify({
     format: BACKUP_FORMAT, version: BACKUP_VERSION, kdf: 'PBKDF2-SHA-256',
     iterations: BACKUP_ITERATIONS, salt: toBase64(salt), iv: toBase64(iv),
@@ -366,7 +373,11 @@ export async function importBackup(text: string, password: string): Promise<{ im
     }
     return { title: entry.title, body: entry.body, images: entry.images as string[], tags: (entry.tags ?? []) as string[], mood: (entry.mood ?? '') as string, favorite: entry.favorite === true, createdAt: entry.createdAt, updatedAt: entry.updatedAt };
   });
+  const vaultKeyAtStart = activeKey;
   const current = await listEntries();
+  if (activeKey !== vaultKeyAtStart) {
+    throw new Error('Nagbago ang lock state habang binubuksan ang backup. Walang na-import; i-unlock at subukang muli.');
+  }
   const fingerprint = (e: DiaryEntry) => JSON.stringify([e.title, e.body, e.images ?? [], e.tags ?? [], e.mood ?? '', e.favorite ?? false, e.createdAt, e.updatedAt]);
   const seen = new Set(current.map(fingerprint));
   const unique = incoming.filter((entry: DiaryEntry) => {
@@ -376,18 +387,26 @@ export async function importBackup(text: string, password: string): Promise<{ im
     return true;
   });
   const key = activeKey;
+  if (key !== vaultKeyAtStart) {
+    throw new Error('Nagbago ang lock state habang naghahanda ng restore. Walang na-import; i-unlock at subukang muli.');
+  }
   const plainRows: DiaryEntry[] = [];
   const encryptedRows: EncryptedEntry[] = [];
   for (const entry of unique) {
     if (key) {
       const encrypted = await encryptText(key, JSON.stringify({ title: entry.title, body: entry.body, images: entry.images, tags: entry.tags ?? [], mood: entry.mood ?? '', favorite: entry.favorite ?? false }));
+      assertActiveKey(key);
       encryptedRows.push({ ...encrypted, createdAt: entry.createdAt, updatedAt: entry.updatedAt });
     } else plainRows.push(entry);
   }
   await db.transaction('rw', db.entries, db.encryptedEntries, db.vault, async () => {
     const vault = await db.vault.get(VAULT_ID);
     if (Boolean(vault) !== Boolean(key)) throw new Error('Nagbago ang lock state. Walang na-import; i-refresh at subukan ulit.');
-    if (key && encryptedRows.length) await db.encryptedEntries.bulkAdd(encryptedRows);
+    if (key) assertActiveKey(key);
+    if (key && encryptedRows.length) {
+      await db.encryptedEntries.bulkAdd(encryptedRows);
+      assertActiveKey(key);
+    }
     if (!key && plainRows.length) await db.entries.bulkAdd(plainRows);
   });
   return { imported: unique.length, skipped: incoming.length - unique.length };
