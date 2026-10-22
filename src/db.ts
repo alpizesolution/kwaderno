@@ -297,12 +297,26 @@ export async function saveEntry(
 }
 
 export async function deleteEntry(id: number): Promise<void> {
-  if (!activeKey) {
+  const key = activeKey;
+  if (!key) {
+    if (await hasVault()) throw new Error('Naka-lock ang Kwaderno. I-unlock muna bago magpatuloy.');
+    // Re-check after the asynchronous vault lookup so a vault created in the
+    // meantime cannot cause a plaintext delete to proceed while locked.
     if (await hasVault()) throw new Error('Naka-lock ang Kwaderno. I-unlock muna bago magpatuloy.');
     await db.entries.delete(id);
     return;
   }
-  await db.encryptedEntries.delete(id);
+
+  await db.transaction('rw', db.encryptedEntries, db.vault, async () => {
+    assertActiveKey(key);
+    if (!(await db.vault.get(VAULT_ID))) {
+      throw new Error('Nagbago ang vault state. I-refresh at subukang muli.');
+    }
+    await db.encryptedEntries.delete(id);
+    // Throwing inside the transaction rolls back if the vault was locked
+    // while the delete was in progress.
+    assertActiveKey(key);
+  });
 }
 
 const BACKUP_FORMAT = 'kwaderno-backup';
