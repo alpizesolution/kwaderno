@@ -89,6 +89,20 @@ describe('Kwadernoko local data safety', () => {
     expect(await listEntries()).toEqual(before);
   });
 
+
+  it('keeps corrupted encrypted records untouched when reading fails', async () => {
+    await saveEntry(sampleEntry);
+    await createVault('123456');
+    const row = await db.encryptedEntries.toCollection().first();
+    expect(row?.id).toBeDefined();
+
+    await db.encryptedEntries.update(row!.id!, { ciphertext: 'not-valid-base64' });
+    const before = await db.encryptedEntries.get(row!.id!);
+
+    await expect(listEntries()).rejects.toThrow();
+    expect(await db.encryptedEntries.get(row!.id!)).toEqual(before);
+  });
+
   it('rejects malformed backup input without changing saved entries', async () => {
     await saveEntry(sampleEntry);
     await createVault('123456');
