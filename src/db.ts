@@ -403,7 +403,10 @@ export async function importBackup(text: string, password: string): Promise<{ im
     const vault = await db.vault.get(VAULT_ID);
     if (Boolean(vault) !== Boolean(key)) throw new Error('Nagbago ang lock state. Walang na-import; i-refresh at subukan ulit.');
     if (key) assertActiveKey(key);
-    if (key && encryptedRows.length) await db.encryptedEntries.bulkAdd(encryptedRows);
+    if (key && encryptedRows.length) {
+      await db.encryptedEntries.bulkAdd(encryptedRows);
+      assertActiveKey(key);
+    }
     if (!key && plainRows.length) await db.entries.bulkAdd(plainRows);
   });
   return { imported: unique.length, skipped: incoming.length - unique.length };
