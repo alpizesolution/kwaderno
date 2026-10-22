@@ -276,6 +276,23 @@ function App() {
     }
   };
 
+  const leaveEditor = (nextPage?: Page) => {
+    if (editing) {
+      const existing = entries.find((entry) => entry.id === editingId);
+      const hasUnsavedChanges = existing
+        ? title !== existing.title
+          || body !== existing.body
+          || JSON.stringify(images) !== JSON.stringify(existing.images ?? [])
+          || tagsInput !== (existing.tags ?? []).join(', ')
+          || mood !== (existing.mood ?? '')
+          || favorite !== (existing.favorite ?? false)
+        : Boolean(title.trim() || body.trim() || images.length || tagsInput.trim() || mood || favorite);
+      if (hasUnsavedChanges && !window.confirm('May hindi pa nai-save na pagbabago. Umalis sa editor at itapon ang mga ito?')) return;
+    }
+    setEditing(false);
+    if (nextPage) setPage(nextPage);
+  };
+
   const renderEntry = (entry: DiaryEntry) => (
     <div className="entry-row" key={entry.id}>
       <button className="entry-preview" onClick={() => openEditor(entry)}>
@@ -324,13 +341,13 @@ function App() {
     <div className="app-shell" data-theme={theme} data-font-size={fontSize}>
       <PwaStatus />
       <aside className="sidebar">
-        <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); setPage('today'); setEditing(false); }}>
+        <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); leaveEditor('today'); }}>
           <span className="brand-mark" aria-hidden="true"><span /></span>
           <span><strong>Kwadernoko</strong><small>sarili mong pahina</small></span>
         </a>
         <div className="side-label">ANG IYONG KWADERNO</div>
         <nav className="side-nav" aria-label="Main navigation">
-          {navItems.map((item) => <button key={item.id} className={`nav-item ${page === item.id && !editing ? 'active' : ''}`} onClick={() => { setPage(item.id); setEditing(false); }}>{<span className="nav-icon" aria-hidden="true">{item.icon}</span>}{item.label}</button>)}
+          {navItems.map((item) => <button key={item.id} className={`nav-item ${page === item.id && !editing ? 'active' : ''}`} onClick={() => leaveEditor(item.id)}>{<span className="nav-icon" aria-hidden="true">{item.icon}</span>}{item.label}</button>)}
         </nav>
         <div className="sidebar-note"><span className="tiny-lock">⌑</span><p>Walang judgment.<br />Walang tsismis.<br /><em>Kwento mo lang.</em></p></div>
         <div className="sidebar-foot"><span className="status-dot" /> {optionalMode ? "Unencrypted · device only" : "Encrypted · device only"}</div>
@@ -340,12 +357,12 @@ function App() {
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark"><span /></span><strong>Kwadernoko</strong></div>
           <span className="date-top">{dateLabel}</span>
-          <div className="topbar-actions"><button className="text-button lock-button" onClick={() => { if (optionalMode) { if (editing && (title.trim() || body.trim()) && !window.confirm("May hindi pa nai-save na pagbabago. Magpatuloy sa paggawa ng lock?")) return; setOptionalMode(false); setVaultExists(false); setEditing(false); setTitle(""); setBody(""); setImages([]); setEditingId(undefined); setPin(""); setConfirmPin(""); setError(""); } else { handleLock(); } }}>{optionalMode ? "⌑ Gumawa ng lock" : "⌑ I-lock"}</button><button className="avatar-button" aria-label="Open settings" onClick={() => { setPage('settings'); setEditing(false); }}>♡</button></div>
+          <div className="topbar-actions"><button className="text-button lock-button" onClick={() => { if (optionalMode) { if (editing && (title.trim() || body.trim()) && !window.confirm("May hindi pa nai-save na pagbabago. Magpatuloy sa paggawa ng lock?")) return; setOptionalMode(false); setVaultExists(false); setEditing(false); setTitle(""); setBody(""); setImages([]); setEditingId(undefined); setPin(""); setConfirmPin(""); setError(""); } else { handleLock(); } }}>{optionalMode ? "⌑ Gumawa ng lock" : "⌑ I-lock"}</button><button className="avatar-button" aria-label="Open settings" onClick={() => leaveEditor('settings')}>♡</button></div>
         </header>
 
         {editing ? (
           <section className="editor-wrap">
-            <button className="back-link" onClick={() => { setEditing(false); setError(''); }}>← Bumalik sa pahina</button>
+            <button className="back-link" onClick={() => { leaveEditor(); setError(''); }}>← Bumalik sa pahina</button>
             <div className="editor-paper">
               <div className="paper-kicker">{editingId === undefined ? 'BAGONG PAHINA' : 'INE-EDIT NA PAHINA'} <span>·</span> {dateLabel.toUpperCase()}</div>
               <input className="title-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Bigyan ng pamagat (optional)" aria-label="Entry title" />
@@ -396,7 +413,7 @@ function App() {
         <footer className="mobile-footer"><span className="status-dot" /> Iyong kwaderno, iyong oras.</footer>
       </main>
       {viewingImage && <div className="image-lightbox" role="dialog" aria-modal="true" aria-label="Pinalaking larawan" onClick={() => setViewingImage(null)}><button type="button" aria-label="Isara ang larawan" onClick={() => setViewingImage(null)}>×</button><img src={viewingImage} alt="Pinalaking kalakip na larawan" onClick={(event) => event.stopPropagation()} /></div>}
-      <nav className="mobile-nav" aria-label="Mobile navigation">{navItems.map((item) => <button key={item.id} className={page === item.id && !editing ? 'active' : ''} onClick={() => { setPage(item.id); setEditing(false); }}><span>{item.icon}</span><small>{item.label}</small></button>)}</nav>
+      <nav className="mobile-nav" aria-label="Mobile navigation">{navItems.map((item) => <button key={item.id} type="button" className={page === item.id && !editing ? 'active' : ''} aria-current={page === item.id && !editing ? 'page' : undefined} onClick={() => leaveEditor(item.id)}><span aria-hidden="true">{item.icon}</span><small>{item.label}</small></button>)}</nav>
     </div>
   );
 }
