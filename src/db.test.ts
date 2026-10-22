@@ -13,6 +13,7 @@ const sampleEntry = {
 beforeEach(async () => {
   lockVault();
   await db.delete();
+  await db.open();
 });
 
 afterEach(async () => {
