@@ -252,3 +252,35 @@
   .backup-actions{display:grid;grid-template-columns:1fr}
   .backup-actions .primary-button{width:100%;min-height:46px}
 }
+
+
+/* Phase 9: install help, clearer PWA states, and mobile touch comfort */
+.pwa-status{align-items:center;max-width:min(560px,calc(100vw - 24px));gap:10px}
+.pwa-status>span{min-width:0}
+.pwa-status button{min-height:36px;min-width:36px;border-radius:5px}
+.pwa-offline{background:#fff8ef;border-color:#dfc3a5}
+.pwa-update{background:#f4f7ef;border-color:#cbd7c3}
+.pwa-install{min-height:46px;padding:12px 17px;box-shadow:0 5px 22px #1e382b24}
+.pwa-help-backdrop{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:#17231dcc;backdrop-filter:blur(4px)}
+.pwa-help-card{position:relative;width:min(100%,420px);max-height:min(85dvh,650px);overflow:auto;padding:30px 27px;background:#fffdf8;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 70px #17231d33;color:var(--ink)}
+.pwa-help-close{position:absolute;top:12px;right:13px;width:40px;height:40px;border:0;border-radius:50%;background:#f0eee7;color:var(--ink);font-size:23px}
+.pwa-help-card h2{margin:12px 36px 15px 0;font-family:'Playfair Display',serif;font-weight:500;font-size:27px;line-height:1.2}
+.pwa-help-card ol{padding-left:22px;margin:0 0 16px}
+.pwa-help-card li,.pwa-help-card>p{font-size:13px;line-height:1.75;color:#686e63;margin-bottom:10px}
+.pwa-help-card .pwa-help-note{padding:12px 13px;border-radius:7px;background:#edf0e9;font-size:11px}
+.pwa-help-card>.primary-button{width:100%;min-height:46px;justify-content:center;margin-top:8px}
+.mobile-nav button{min-width:0;min-height:44px;padding:4px 2px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.mobile-nav button small{font-size:10px;line-height:1.2}
+.nav-item{min-height:44px;touch-action:manipulation}
+button,.attach-button,.backup-import-label{touch-action:manipulation}
+@media(max-width:650px){
+  .pwa-status{top:max(8px,env(safe-area-inset-top));max-width:calc(100vw - 20px);padding:10px 11px;font-size:11px}
+  .pwa-status button{min-width:36px;min-height:36px}
+  .pwa-install{bottom:calc(78px + env(safe-area-inset-bottom));right:12px;left:12px;width:calc(100% - 24px);justify-content:center;min-height:48px}
+  .pwa-help-backdrop{align-items:end;padding:10px 10px max(10px,env(safe-area-inset-bottom))}
+  .pwa-help-card{max-height:85dvh;padding:27px 21px 22px;border-radius:14px}
+  .pwa-help-card h2{font-size:25px}
+  .mobile-nav{height:calc(69px + env(safe-area-inset-bottom));padding:6px 5px max(7px,env(safe-area-inset-bottom))}
+  .main-area{padding-bottom:calc(75px + env(safe-area-inset-bottom))}
+  .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
+}
