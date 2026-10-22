@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['icons/kwaderno.svg'],
       manifest: {
-        name: 'Kwaderno - Ang Iyong Talaarawan',
-        short_name: 'Kwaderno',
+        name: 'Kwadernoko — Ang Iyong Talaarawan',
+        short_name: 'Kwadernoko',
         description: 'Ligtas, pribado, at offline na talaarawan para sa kwento ng bawat araw mo.',
         lang: 'fil',
         start_url: '/',
