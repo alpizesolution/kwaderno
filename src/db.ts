@@ -58,6 +58,10 @@ const decoder = new TextDecoder();
 
 let activeKey: CryptoKey | null = null;
 
+function assertActiveKey(key: CryptoKey): void {
+  if (activeKey !== key) throw new Error('Na-lock ang Kwaderno habang pinoproseso. I-unlock muli bago magpatuloy.');
+}
+
 function requireCrypto(): Crypto {
   if (!globalThis.crypto?.subtle || !globalThis.crypto.getRandomValues) {
     throw new Error('Hindi available ang secure encryption sa browser na ito. Gumamit ng updated browser sa HTTPS.');
@@ -173,7 +177,7 @@ export async function createVault(passphrase: string): Promise<void> {
     const current = await db.entries.toArray();
     const unchanged = current.length === legacyEntries.length && current.every((entry) => {
       const original = legacyEntries.find((candidate) => candidate.id === entry.id);
-      return original && original.updatedAt === entry.updatedAt && original.title === entry.title && original.body === entry.body;
+      return original && JSON.stringify([original.updatedAt, original.title, original.body, original.images ?? [], original.tags ?? [], original.mood ?? '', original.favorite ?? false]) === JSON.stringify([entry.updatedAt, entry.title, entry.body, entry.images ?? [], entry.tags ?? [], entry.mood ?? '', entry.favorite ?? false]);
     });
     if (!unchanged) throw new Error('May nagbago sa mga pahina habang nagse-set up. Walang tinanggal; i-refresh at subukang muli.');
 
@@ -217,7 +221,17 @@ export async function listEntries(): Promise<DiaryEntry[]> {
   const entries: DiaryEntry[] = [];
 
   for (const entry of encryptedEntries) {
-    const decrypted = JSON.parse(await decryptText(key, entry.iv, entry.ciphertext)) as Pick<DiaryEntry, 'title' | 'body' | 'images' | 'tags' | 'mood' | 'favorite'>;
+    const plaintext = await decryptText(key, entry.iv, entry.ciphertext);
+    assertActiveKey(key);
+    let decrypted: Pick<DiaryEntry, 'title' | 'body' | 'images' | 'tags' | 'mood' | 'favorite'>;
+    try {
+      decrypted = JSON.parse(plaintext) as Pick<DiaryEntry, 'title' | 'body' | 'images' | 'tags' | 'mood' | 'favorite'>;
+    } catch {
+      throw new Error('May sirang encrypted entry. Hindi binago ang naka-save na data.');
+    }
+    if (!decrypted || typeof decrypted.title !== 'string' || typeof decrypted.body !== 'string' || (decrypted.images !== undefined && (!Array.isArray(decrypted.images) || !decrypted.images.every((image) => typeof image === 'string')))) {
+      throw new Error('May invalid na encrypted entry. Hindi binago ang naka-save na data.');
+    }
     entries.push({
       id: entry.id,
       title: decrypted.title,
@@ -230,6 +244,7 @@ export async function listEntries(): Promise<DiaryEntry[]> {
       updatedAt: entry.updatedAt,
     });
   }
+  assertActiveKey(key);
   return entries;
 }
 
@@ -241,6 +256,7 @@ export async function saveEntry(
   if (!activeKey) {
     if (await hasVault()) throw new Error('Naka-lock ang Kwaderno. I-unlock muna bago magpatuloy.');
     const plainEntry = { title: entry.title.trim(), body: entry.body.trim(), images: entry.images ?? [], tags: entry.tags ?? [], mood: entry.mood ?? '', favorite: entry.favorite ?? false, updatedAt: now };
+    if (await hasVault()) throw new Error('May Kandadong Kwaderno nang naka-set up. I-unlock muna bago magpatuloy.');
     if (id !== undefined) {
       const existing = await db.entries.get(id);
       if (!existing) throw new Error('Hindi na makita ang pahinang ine-edit. I-refresh ang listahan at subukan ulit.');
@@ -259,9 +275,11 @@ export async function saveEntry(
     favorite: entry.favorite ?? false,
   }));
 
+  assertActiveKey(key);
   if (id !== undefined) {
     const existing = await db.encryptedEntries.get(id);
     if (!existing) throw new Error('Hindi na makita ang pahinang ine-edit. I-refresh ang listahan at subukan ulit.');
+    assertActiveKey(key);
     await db.encryptedEntries.update(id, {
       ...content,
       updatedAt: now,
@@ -269,11 +287,13 @@ export async function saveEntry(
     return id;
   }
 
-  return db.encryptedEntries.add({
+  assertActiveKey(key);
+  const newId = await db.encryptedEntries.add({
     ...content,
     createdAt: now,
     updatedAt: now,
   });
+  return newId;
 }
 
 export async function deleteEntry(id: number): Promise<void> {
