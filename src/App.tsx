@@ -5,6 +5,21 @@ import PwaStatus from './PwaStatus';
 type Page = 'today' | 'entries' | 'calendar' | 'settings';
 type Mood = '' | 'Masaya' | 'Payapa' | 'Malungkot' | 'Balisa' | 'Pagod' | 'Galit' | 'Nagpapasalamat' | 'Umaasa';
 
+const moodOptions: { value: Exclude<Mood, ''>; icon: string }[] = [
+  { value: 'Masaya', icon: '😊' },
+  { value: 'Payapa', icon: '😌' },
+  { value: 'Malungkot', icon: '😢' },
+  { value: 'Balisa', icon: '😰' },
+  { value: 'Pagod', icon: '😴' },
+  { value: 'Galit', icon: '😠' },
+  { value: 'Nagpapasalamat', icon: '🙏' },
+  { value: 'Umaasa', icon: '🌱' },
+];
+
+function moodIcon(value?: string): string {
+  return moodOptions.find((option) => option.value === value)?.icon ?? '🙂';
+}
+
 const navItems: { id: Page; label: string; icon: string }[] = [
   { id: 'today', label: 'Today', icon: '☼' },
   { id: 'entries', label: 'Mga Pahina', icon: '▤' },
@@ -194,7 +209,7 @@ function App() {
       <button className="entry-preview" onClick={() => openEditor(entry)}>
         <span className="entry-date">{new Date(entry.updatedAt).toLocaleDateString('fil-PH', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()} · {new Date(entry.updatedAt).toLocaleTimeString('fil-PH', { hour: 'numeric', minute: '2-digit' })}</span>
         <strong>{entry.title || 'Walang pamagat'} {entry.favorite && <span className="favorite-mark" aria-label="Paborito">♥</span>}</strong>
-        {entry.mood && <span className="entry-mood">{entry.mood}</span>}
+        {entry.mood && <span className="entry-mood" title={entry.mood} aria-label={`Pakiramdam: ${entry.mood}`}><span aria-hidden="true">{moodIcon(entry.mood)}</span> {entry.mood}</span>}
         <p>{entry.body}</p>
         {!!entry.tags?.length && <div className="entry-tags">{entry.tags.map((tag) => <span key={`${entry.id}-${tag}`}>#{tag}</span>)}</div>}
         {entry.images?.length ? <div className="entry-image-strip">{entry.images.slice(0, 3).map((src, index) => <img key={`${entry.id}-image-${index}`} src={src} alt={`Larawan ${index + 1}`} loading="lazy" />)}{entry.images.length > 3 && <span>+{entry.images.length - 3}</span>}</div> : null}
@@ -264,7 +279,7 @@ function App() {
               <textarea className="body-input" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Blangko pa ang pahina. Ano'ng nasa isip mo?" aria-label="Diary entry" autoFocus />
               <div className="entry-metadata-editor">
                 <label>Mga tag <span>· hanggang 10, paghiwalayin ng kuwit</span><input value={tagsInput} onChange={(event) => setTagsInput(event.target.value)} maxLength={400} placeholder="hal. pamilya, trabaho, sarili" /></label>
-                <label>Pakiramdam ngayon<select value={mood} onChange={(event) => setMood(event.target.value as Mood)}><option value="">Walang pinili</option><option>Masaya</option><option>Payapa</option><option>Malungkot</option><option>Balisa</option><option>Pagod</option><option>Galit</option><option>Nagpapasalamat</option><option>Umaasa</option></select></label>
+                <div className="mood-picker" role="group" aria-label="Pakiramdam ngayon"><span className="mood-picker-label">Pakiramdam ngayon</span><div className="mood-options"><button type="button" className={`mood-option mood-none ${mood === '' ? 'is-selected' : ''}`} aria-pressed={mood === ''} onClick={() => setMood('')}><span aria-hidden="true">○</span><small>Wala</small></button>{moodOptions.map((option) => <button key={option.value} type="button" className={`mood-option ${mood === option.value ? 'is-selected' : ''}`} aria-label={option.value} title={option.value} aria-pressed={mood === option.value} onClick={() => setMood(option.value)}><span aria-hidden="true">{option.icon}</span><small>{option.value}</small></button>)}</div></div>
                 <button type="button" className={`favorite-toggle ${favorite ? 'is-favorite' : ''}`} aria-pressed={favorite} onClick={() => setFavorite((value) => !value)}>{favorite ? '♥ Nasa mga paborito' : '♡ Idagdag sa mga paborito'}</button>
               </div>
               <div className="image-attachments"><div className="attachment-heading"><div><strong>Mga larawan</strong><small>Hanggang 5 larawan bawat pahina · naka-save kasama ng entry</small></div><label className="attach-button">＋ Mag-attach<input type="file" accept="image/*" multiple hidden onChange={(event) => { const files = Array.from(event.target.files ?? []); event.currentTarget.value = ''; void (async () => { const available = Math.max(0, 5 - images.length); if (!available) { setError('Hanggang 5 larawan lamang bawat pahina.'); return; } const selected = files.slice(0, available); if (files.length > available) setNotice('Hanggang 5 larawan lamang bawat pahina; idinagdag ang unang puwedeng larawan.'); for (const file of selected) { if (!file.type.startsWith('image/')) { setError('Larawan lamang ang puwedeng i-attach.'); continue; } if (file.size > 12 * 1024 * 1024) { setError('May larawang lampas 12 MB. Pumili ng mas maliit na file.'); continue; } try { const dataUrl = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onerror = () => reject(new Error('Hindi mabasa ang larawan.')); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(file); }); const optimized = await new Promise<string>((resolve, reject) => { const image = new Image(); image.onerror = () => reject(new Error('Hindi ma-open ang larawan.')); image.onload = () => { const scale = Math.min(1, 1400 / Math.max(image.naturalWidth, image.naturalHeight)); const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale)); const context = canvas.getContext('2d'); if (!context) { reject(new Error('Hindi ma-process ang larawan.')); return; } context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', 0.82)); }; image.src = dataUrl; }); setImages((current) => current.length < 5 ? [...current, optimized] : current); setError(''); } catch { setError('Hindi naidagdag ang isang larawan. Subukan ang ibang file.'); } } })(); }} /></label></div>{images.length ? <div className="attachment-grid">{images.map((src, index) => <div className="attachment-thumb" key={'attached-' + index}><button type="button" className="attachment-view" onClick={() => setViewingImage(src)} aria-label={'Tingnan ang larawan ' + (index + 1)}><img src={src} alt={'Kalakip na larawan ' + (index + 1)} /></button><button type="button" aria-label={'Alisin ang larawan ' + (index + 1)} onClick={() => setImages((current) => current.filter((_, imageIndex) => imageIndex !== index))}>×</button></div>)}</div> : <p className="attachment-empty">Wala pang kalakip na larawan.</p>}</div>
